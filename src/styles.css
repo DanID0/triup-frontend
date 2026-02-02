@@ -3,5 +3,7 @@
 @import "tailwindcss";
 @theme {
   --color-primary: #30364F;
+  --color-buttons: #0057CA;
+  --color-secondary: #ACBAC4;
 
 }
