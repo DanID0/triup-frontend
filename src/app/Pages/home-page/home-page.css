@@ -1,3 +1,6 @@
 .bg-hero{
     background-image: url('/assets/HeroHomepage.png');
 }
+.bg-smol{
+    background-image: url('/assets/board.png');
+}
