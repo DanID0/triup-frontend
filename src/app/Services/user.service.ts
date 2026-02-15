@@ -11,15 +11,12 @@ export class UserService {
 
   constructor(private http: HttpClient) {}
 
-  async getUser(): Promise<User> {
-    return lastValueFrom(
-      this.http.get<User>(`${this.apiUrl}/profile`, { withCredentials: true })
-    );
-  }
+  async getUser():Promise<User> {
+    const user = await lastValueFrom(this.http.get<User>(this.apiUrl,{withCredentials:true}));
+   return user;
+   }
 
-  async logOut(): Promise<void> {
-    return lastValueFrom(
-      this.http.post<void>(`${this.apiUrl}/logout`, {}, { withCredentials: true })
-    );
+  async logOut() {
+    await lastValueFrom(this.http.post(`http://localhost:3000/auth/logout`,{},{withCredentials:true}));
   }
 }

@@ -1,7 +1,19 @@
 <div class="container-fluid h-21 bg-primary text-white flex justify-between items-center px-4 ">
-        <img src="/assets/logoooclassic.png" alt="Logo" class="h-12">
-        <button class="bg-buttons  text-white px-4 py-2  w-[178px] h-[54px]">Log-in</button>
+
     </div>
+    <div class="flex flex-row items-center gap-4">
+        <ng-container *ngIf="!isLoggedIn">
+            <img src="/assets/logoooclassic.png" alt="Logo" class="h-12">
+            <button class="bg-buttons  text-white px-4 py-2  w-[178px] h-[54px]">Log-in</button>
+        </ng-container>
+        
+        <ng-container *ngIf="isLoggedIn">
+            
+
+
+        </ng-container>
+    </div>
+
 <main class="min-h-screen ">
     <router-outlet></router-outlet>
 </main>
