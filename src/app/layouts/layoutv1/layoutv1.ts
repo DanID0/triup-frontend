@@ -6,9 +6,10 @@ import { selectUser } from '../../store/user-store/user.selectors';
 import { getUser } from '../../store/user-store/user.actions';
 import { User } from '../../core/interface';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 @Component({
   selector: 'app-layoutv1',
-  imports: [RouterOutlet, CommonModule],
+  imports: [RouterOutlet, CommonModule, RouterLink],
   templateUrl: './layoutv1.html',
   styleUrl: './layoutv1.css',
 })

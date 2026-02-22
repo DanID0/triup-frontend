@@ -1,0 +1,23 @@
+<section class="flex flex-row bg-[#ffffff] w-full justify-evenly">
+<img src="/assets/authimg.png" class="h-screen w-[50%]" alt="">
+<div class="flex flex-col items-center justify-center min-w-[50%] gap-6 ">
+    <h1 class="text-2xl font-bold">Welcome back to TaskM</h1>
+    <p class="text-sm text-gray-500">Organize your tasks effortlessly with TaskM.</p>
+
+        <div class="flex flex-col w-[405.25px] h-[52px] border rounded-md border-[#693CFC] justify-center">
+            <label class="text-sm text-gray-500">Username </label>
+            <input class="focus:outline-none" [(ngModel)]="username" />
+          </div>
+          <div class="flex flex-col w-[405.25px] h-[52px] border rounded-md border-[#693CFC] justify-center">
+            <label class="text-sm text-gray-500">Email</label>
+            <input class="focus:outline-none" [(ngModel)]="email" />
+          </div>
+          <div class="flex flex-col w-[405.25px] h-[52px] border rounded-md border-[#693CFC] justify-center">
+            <label class="text-sm text-gray-500">Password</label>
+            <input class="focus:outline-none" [(ngModel)]="password" />
+          </div>
+        <a href="" class="text-blue-500">Forgot password?</a>
+        <button class="bg-buttons text-white px-4 py-2 rounded-md w-[405px] h-10 " (click)="login()">Log-in</button>
+        
+</div>
+</section>

@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { User } from '../core/interface';
+
 import { HttpClient } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
 
@@ -7,7 +8,7 @@ import { lastValueFrom } from 'rxjs';
   providedIn: 'root',
 })
 export class UserService {
-  private apiUrl = 'http://localhost:3000/user';
+  private apiUrl = 'http://localhost:3000/user/profile';
 
   constructor(private http: HttpClient) {}
 
@@ -15,6 +16,9 @@ export class UserService {
     const user = await lastValueFrom(this.http.get<User>(this.apiUrl,{withCredentials:true}));
    return user;
    }
+  async login(username: string, password: string, email: string) {
+    await lastValueFrom(this.http.post(`http://localhost:3000/auth/login`,{username, password, email},{withCredentials:true}));
+  }
 
   async logOut() {
     await lastValueFrom(this.http.post(`http://localhost:3000/auth/logout`,{},{withCredentials:true}));
