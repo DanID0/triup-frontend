@@ -3,6 +3,7 @@ import { HomePage } from './Pages/home-page/home-page';
 import { Layoutv1 } from './layouts/layoutv1/layoutv1';
 import { AuthComponent } from './Pages/auth/auth-component/auth-component';
 import { Workboard } from './Pages/workboard/workboard/workboard';
+import { Board } from './Pages/board/board/board';
 export const routes: Routes = [
     //Kogda zdelajesh layout ispolzuj eto kak example
     //path: '', (path ostavj pustim)
@@ -25,6 +26,13 @@ export const routes: Routes = [
           loadComponent: () =>
             import('./Pages/workboard/workboard/workboard').then(
               (m) => m.Workboard
+            ),
+        },
+        {
+          path: 'board',
+          loadComponent: () =>
+            import('./Pages/board/board/board').then(
+              (m) => m.Board
             ),
         }
       ]

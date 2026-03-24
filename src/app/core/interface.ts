@@ -72,6 +72,7 @@ export interface UserBoard{
 
 export interface Column{
   id: string;
+  name:string;
   boardId: string;
   board:Board;
   position: bigint;

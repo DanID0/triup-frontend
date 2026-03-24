@@ -1,1 +1,19 @@
-<p>board works!</p>
+<div class="flex max-w-7xl mx-auto gap-4 mt-4">
+    @for (column of columns; track column.id) {
+        <div
+        class="relative bg-gray-200 w-full rounded-md p-4 flex-1 transition-colors duration-300"
+        (drop)="onDrop($event, column.id)"
+        (dragover)="$event.preventDefault()"
+      >
+        <h3 class="font-bold mb-4 text-lg text-gray-600">
+          {{ column.name }}
+        </h3>
+  
+        <div class="flex flex-col gap-4">
+          @for (task of column.tasks; track task.id) {
+            <app-task [task]="task"></app-task>
+          }
+        </div>
+      </div>
+    }
+  </div>
