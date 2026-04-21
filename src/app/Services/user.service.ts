@@ -1,26 +1,55 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, lastValueFrom } from 'rxjs';
 import { User } from '../core/interface';
 
-import { HttpClient } from '@angular/common/http';
-import { lastValueFrom } from 'rxjs';
+export interface SignupPayload {
+  username: string;
+  email: string;
+  password: string;
+}
+
+export interface LoginPayload {
+  email: string;
+  password: string;
+}
 
 @Injectable({
   providedIn: 'root',
 })
 export class UserService {
-  private apiUrl = 'http://localhost:3000/user/profile';
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = 'http://localhost:3000';
 
-  constructor(private http: HttpClient) {}
-
-  async getUser():Promise<User> {
-    const user = await lastValueFrom(this.http.get<User>(this.apiUrl,{withCredentials:true}));
-   return user;
-   }
-  async login(username: string, password: string, email: string) {
-    await lastValueFrom(this.http.post(`http://localhost:3000/auth/login`,{username, password, email},{withCredentials:true}));
+  async getUser(): Promise<User> {
+    return await lastValueFrom(
+      this.http.get<User>(`${this.baseUrl}/user/profile`, { withCredentials: true }),
+    );
   }
 
-  async logOut() {
-    await lastValueFrom(this.http.post(`http://localhost:3000/auth/logout`,{},{withCredentials:true}));
+  async signup(payload: SignupPayload): Promise<User> {
+    return await lastValueFrom(
+      this.http.post<User>(`${this.baseUrl}/user`, payload, { withCredentials: true }),
+    );
+  }
+
+  async login(payload: LoginPayload): Promise<void> {
+    await lastValueFrom(
+      this.http.post(`${this.baseUrl}/auth/login`, payload, { withCredentials: true }),
+    );
+  }
+
+  refresh(): Observable<{ id: string }> {
+    return this.http.post<{ id: string }>(
+      `${this.baseUrl}/auth/refresh`,
+      {},
+      { withCredentials: true },
+    );
+  }
+
+  async logOut(): Promise<void> {
+    await lastValueFrom(
+      this.http.post(`${this.baseUrl}/auth/logout`, {}, { withCredentials: true }),
+    );
   }
 }

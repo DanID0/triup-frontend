@@ -1,10 +1,11 @@
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideStore } from '@ngrx/store';
 import { provideEffects } from '@ngrx/effects';
 
 import { routes } from './app.routes';
+import { authInterceptor } from './core/auth.interceptor';
 
 import { userReducer } from './store/user-store/user.reducers';
 import { UserEffects } from './store/user-store/user.effects';
@@ -21,18 +22,29 @@ import { BoardEffects } from './store/board-store/board.effects';
 import { columnReducer } from './store/column-store/column.reducers';
 import { ColumnEffects } from './store/column-store/column.effects';
 
+import { commentReducer } from './store/comment-store/comment.reducers';
+import { CommentEffects } from './store/comment-store/comment.effects';
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    provideHttpClient(),
+    provideHttpClient(withInterceptors([authInterceptor])),
     provideStore({
       user: userReducer,
       tasks: taskReducer,
       workspaces: workspaceReducer,
       boards: boardReducer,
       columns: columnReducer,
+      comments: commentReducer,
     }),
-    provideEffects(UserEffects, TaskEffects, WorkspaceEffects, BoardEffects, ColumnEffects),
+    provideEffects(
+      UserEffects,
+      TaskEffects,
+      WorkspaceEffects,
+      BoardEffects,
+      ColumnEffects,
+      CommentEffects,
+    ),
   ],
 };

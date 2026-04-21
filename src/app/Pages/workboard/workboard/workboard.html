@@ -1,1 +1,473 @@
-<p>workboard works!</p>
+<div class="flex min-h-screen bg-slate-900 text-slate-100">
+  <aside class="w-60 shrink-0 border-r border-slate-800 bg-slate-950/60 p-4 flex flex-col gap-6">
+    <nav class="flex flex-col gap-1">
+      <button
+        type="button"
+        (click)="activeTab.set('boards')"
+        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition"
+        [class.bg-slate-800]="activeTab() === 'boards'"
+        [class.text-white]="activeTab() === 'boards'"
+        [class.text-slate-300]="activeTab() !== 'boards'"
+        [class.hover:bg-slate-800]="activeTab() !== 'boards'"
+      >
+        <span class="inline-flex h-5 w-5 items-center justify-center rounded-sm border border-slate-500">
+          <span class="h-3 w-3 bg-slate-400 rounded-[1px]"></span>
+        </span>
+        Boards
+      </button>
+
+      <button
+        type="button"
+        (click)="activeTab.set('templates')"
+        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition"
+        [class.bg-slate-800]="activeTab() === 'templates'"
+        [class.text-white]="activeTab() === 'templates'"
+        [class.text-slate-300]="activeTab() !== 'templates'"
+        [class.hover:bg-slate-800]="activeTab() !== 'templates'"
+      >
+        <span class="inline-flex h-5 w-5 items-center justify-center rounded-sm border border-slate-500">
+          <span class="h-2 w-3 bg-slate-400"></span>
+        </span>
+        Templates
+      </button>
+
+      <button
+        type="button"
+        (click)="activeTab.set('settings')"
+        class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition"
+        [class.bg-slate-800]="activeTab() === 'settings'"
+        [class.text-white]="activeTab() === 'settings'"
+        [class.text-slate-300]="activeTab() !== 'settings'"
+        [class.hover:bg-slate-800]="activeTab() !== 'settings'"
+      >
+        <span class="inline-flex h-5 w-5 items-center justify-center rounded-full border border-slate-500">
+          <span class="h-2 w-2 bg-slate-400 rounded-full"></span>
+        </span>
+        Settings
+      </button>
+    </nav>
+
+    <div class="flex flex-col gap-2">
+      <div class="flex items-center justify-between px-3">
+        <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Workspaces
+        </span>
+        <button
+          type="button"
+          (click)="openCreateWorkspace()"
+          class="text-slate-400 hover:text-white transition"
+          title="Create workspace"
+        >
+          +
+        </button>
+      </div>
+
+      <ul class="flex flex-col gap-1 max-h-[40vh] overflow-y-auto pr-1">
+        <li
+          *ngFor="let w of workspaces(); trackBy: trackById"
+          class="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 cursor-pointer"
+          (click)="openCreateBoard()"
+          [title]="'Create board in ' + w.name"
+        >
+          <span
+            class="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-600 text-xs font-semibold text-white"
+          >
+            {{ workspaceInitial(w.name) }}
+          </span>
+          <span class="truncate">{{ w.name }}</span>
+        </li>
+
+        <li *ngIf="!workspaces().length && !workspacesLoading()" class="px-3 text-xs text-slate-500">
+          No workspaces yet.
+        </li>
+      </ul>
+    </div>
+  </aside>
+
+  <main class="flex-1 min-w-0">
+    <header class="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-slate-800 bg-slate-950/70 backdrop-blur px-6 py-3">
+      <div class="flex items-center gap-3 text-lg font-semibold tracking-wide">
+        <span class="inline-block h-6 w-6 rounded bg-linear-to-br from-orange-400 to-red-500"></span>
+        <span>TaskM</span>
+      </div>
+
+      <div class="flex-1 max-w-md">
+        <label class="relative block">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
+          <input
+            type="text"
+            [ngModel]="searchQuery()"
+            (ngModelChange)="searchQuery.set($event)"
+            placeholder="Search boards"
+            class="w-full rounded-md border border-slate-700 bg-slate-800/60 pl-9 pr-3 py-2 text-sm placeholder-slate-500 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+          />
+        </label>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button
+          type="button"
+          (click)="openCreateBoard()"
+          class="inline-flex items-center gap-2 rounded-md bg-linear-to-r from-indigo-500 to-violet-600 px-4 py-2 text-sm font-semibold text-white shadow hover:from-indigo-400 hover:to-violet-500 transition"
+        >
+          + Create
+        </button>
+        <button
+          type="button"
+          (click)="onLogout()"
+          class="rounded-md border border-slate-700 px-3 py-2 text-xs text-slate-200 hover:bg-slate-800 transition"
+        >
+          Logout
+        </button>
+        <div
+          class="flex h-9 w-9 items-center justify-center rounded-full bg-linear-to-br from-pink-400 to-fuchsia-600 ring-2 ring-slate-800 text-xs font-semibold text-white"
+          [title]="user()?.username || 'Account'"
+        >
+          {{ (user()?.username || '?').charAt(0).toUpperCase() }}
+        </div>
+      </div>
+    </header>
+
+    <div class="p-6 space-y-10 max-w-6xl">
+      <div
+        *ngIf="workspacesError() as err"
+        class="rounded-md border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm text-red-300"
+      >
+        Failed to load workspaces: {{ err }}
+      </div>
+
+      <ng-container *ngIf="filteredBoards() as results; else defaultSections">
+        <section>
+          <div class="mb-3 flex items-center gap-2">
+            <h2 class="text-lg font-semibold">Search results</h2>
+            <span class="text-xs text-slate-400">({{ results.length }})</span>
+          </div>
+
+          <div *ngIf="!results.length" class="rounded-md border border-slate-800 bg-slate-900/60 p-6 text-sm text-slate-400">
+            No boards match "{{ searchQuery() }}".
+          </div>
+
+          <div class="overflow-hidden rounded-md border border-slate-800" *ngIf="results.length">
+            <ng-container
+              *ngTemplateOutlet="boardTable; context: { $implicit: results }"
+            ></ng-container>
+          </div>
+        </section>
+      </ng-container>
+
+      <ng-template #defaultSections>
+        <section *ngIf="recentBoards().length">
+          <div class="mb-3 flex items-center gap-2">
+            <span class="text-slate-400">⏱</span>
+            <h2 class="text-lg font-semibold">Recently viewed</h2>
+          </div>
+          <div class="overflow-hidden rounded-md border border-slate-800">
+            <ng-container
+              *ngTemplateOutlet="boardTable; context: { $implicit: recentBoards() }"
+            ></ng-container>
+          </div>
+        </section>
+
+        <section>
+          <div class="mb-3 flex items-center justify-between">
+            <h2 class="text-lg font-semibold">Your workspaces</h2>
+            <button
+              type="button"
+              (click)="openCreateWorkspace()"
+              class="text-xs text-indigo-300 hover:text-indigo-200"
+            >
+              + New workspace
+            </button>
+          </div>
+
+          <div
+            *ngIf="!ownedWorkspaces().length && !workspacesLoading()"
+            class="rounded-md border border-dashed border-slate-700 bg-slate-900/40 p-6 text-sm text-slate-400"
+          >
+            You don't own any workspaces yet.
+            <button
+              type="button"
+              (click)="openCreateWorkspace()"
+              class="ml-1 font-medium text-indigo-300 hover:text-indigo-200"
+            >
+              Create one →
+            </button>
+          </div>
+
+          <div class="space-y-6">
+            <article
+              *ngFor="let ws of ownedWorkspaces(); trackBy: trackById"
+              class="rounded-lg border border-slate-800 bg-slate-900/40"
+            >
+              <header class="flex items-center justify-between gap-3 border-b border-slate-800 px-4 py-3">
+                <div class="flex items-center gap-3">
+                  <span class="flex h-8 w-8 items-center justify-center rounded-md bg-indigo-600 text-sm font-semibold">
+                    {{ workspaceInitial(ws.name) }}
+                  </span>
+                  <div>
+                    <div class="text-sm font-semibold">{{ ws.name }}</div>
+                    <div class="text-xs text-slate-400">{{ ws.accessType }}</div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  (click)="openCreateBoard(); newBoardWorkspaceId = ws.id"
+                  class="rounded-md border border-slate-700 px-3 py-1 text-xs text-slate-200 hover:bg-slate-800"
+                >
+                  + Board
+                </button>
+              </header>
+
+              <ng-container
+                *ngTemplateOutlet="boardTable; context: { $implicit: boardsFor(ws.id), workspace: ws }"
+              ></ng-container>
+            </article>
+          </div>
+        </section>
+
+        <section *ngIf="guestWorkspaces().length">
+          <div class="mb-3 flex items-center gap-2">
+            <h2 class="text-lg font-semibold">Guest workspaces</h2>
+          </div>
+          <div class="space-y-6">
+            <article
+              *ngFor="let ws of guestWorkspaces(); trackBy: trackById"
+              class="rounded-lg border border-slate-800 bg-slate-900/40"
+            >
+              <header class="flex items-center gap-3 border-b border-slate-800 px-4 py-3">
+                <span class="flex h-8 w-8 items-center justify-center rounded-md bg-fuchsia-600 text-sm font-semibold">
+                  {{ workspaceInitial(ws.name) }}
+                </span>
+                <div>
+                  <div class="text-sm font-semibold">{{ ws.name }}</div>
+                  <div class="text-xs text-slate-400">Guest · {{ ws.accessType }}</div>
+                </div>
+              </header>
+
+              <ng-container
+                *ngTemplateOutlet="boardTable; context: { $implicit: boardsFor(ws.id), workspace: ws }"
+              ></ng-container>
+            </article>
+          </div>
+        </section>
+      </ng-template>
+    </div>
+  </main>
+</div>
+
+<ng-template #boardTable let-boards let-workspace="workspace">
+  <table class="w-full border-collapse text-sm" *ngIf="boards.length; else emptyBoards">
+    <thead class="bg-slate-900/60 text-left text-xs uppercase tracking-wide text-slate-400">
+      <tr>
+        <th class="px-4 py-2 font-semibold">Board name</th>
+        <th class="px-4 py-2 font-semibold">Workspace</th>
+        <th class="px-4 py-2 font-semibold">Creator</th>
+        <th class="px-4 py-2 font-semibold">Creation date</th>
+        <th class="px-4 py-2 font-semibold">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr
+        *ngFor="let b of boards; trackBy: trackById"
+        (click)="openBoard(b)"
+        class="cursor-pointer border-t border-slate-800 hover:bg-slate-800/40 transition"
+      >
+        <td class="px-4 py-2">
+          <div class="flex items-center gap-2">
+            <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+            <span>{{ b.name }}</span>
+          </div>
+        </td>
+        <td class="px-4 py-2 text-slate-300">
+          {{ (workspace || workspaceById(b.workspaceId))?.name || '—' }}
+        </td>
+        <td class="px-4 py-2 text-slate-300">
+          {{ creatorName(workspace || workspaceById(b.workspaceId)) }}
+        </td>
+        <td class="px-4 py-2 text-slate-300">
+          {{ b.createdAt ? (b.createdAt | date: 'dd.MM.yyyy') : '—' }}
+        </td>
+        <td class="px-4 py-2">
+          <span class="inline-flex items-center rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-300">
+            Active
+          </span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <ng-template #emptyBoards>
+    <div class="px-4 py-6 text-sm text-slate-400">
+      No boards in this workspace yet.
+    </div>
+  </ng-template>
+</ng-template>
+
+<div
+  *ngIf="createModal() as mode"
+  class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4"
+  (click)="closeModal()"
+>
+  <div
+    class="w-full max-w-md rounded-lg border border-slate-800 bg-slate-900 p-6 shadow-2xl"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="mb-5 flex items-center gap-2">
+      <button
+        type="button"
+        (click)="createModal.set('board'); newBoardWorkspaceId = newBoardWorkspaceId || (ownedWorkspaces()[0]?.id || '')"
+        class="rounded-md px-3 py-1 text-sm font-medium transition"
+        [class.bg-indigo-600]="mode === 'board'"
+        [class.text-white]="mode === 'board'"
+        [class.text-slate-400]="mode !== 'board'"
+        [class.hover:text-slate-200]="mode !== 'board'"
+      >
+        New board
+      </button>
+      <button
+        type="button"
+        (click)="createModal.set('workspace')"
+        class="rounded-md px-3 py-1 text-sm font-medium transition"
+        [class.bg-indigo-600]="mode === 'workspace'"
+        [class.text-white]="mode === 'workspace'"
+        [class.text-slate-400]="mode !== 'workspace'"
+        [class.hover:text-slate-200]="mode !== 'workspace'"
+      >
+        New workspace
+      </button>
+      <button
+        type="button"
+        (click)="closeModal()"
+        class="ml-auto text-slate-400 hover:text-slate-200 text-lg leading-none"
+      >
+        ×
+      </button>
+    </div>
+
+    <form
+      *ngIf="mode === 'board'"
+      (ngSubmit)="submitCreateBoard()"
+      class="space-y-4"
+    >
+      <div>
+        <label class="mb-1 block text-xs font-medium text-slate-300">Board name</label>
+        <input
+          type="text"
+          name="boardName"
+          [(ngModel)]="newBoardName"
+          placeholder="e.g. Marketing plan"
+          required
+          class="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-500"
+        />
+      </div>
+
+      <div>
+        <label class="mb-1 block text-xs font-medium text-slate-300">Workspace</label>
+        <select
+          name="boardWorkspace"
+          [(ngModel)]="newBoardWorkspaceId"
+          required
+          class="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500"
+        >
+          <option value="" disabled>Select a workspace</option>
+          <option *ngFor="let w of ownedWorkspaces()" [value]="w.id">{{ w.name }}</option>
+        </select>
+        <p
+          *ngIf="!ownedWorkspaces().length"
+          class="mt-2 text-xs text-amber-300"
+        >
+          You need a workspace first.
+          <button
+            type="button"
+            (click)="createModal.set('workspace')"
+            class="ml-1 font-medium text-indigo-300 hover:text-indigo-200"
+          >
+            Create one →
+          </button>
+        </p>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button
+          type="button"
+          (click)="closeModal()"
+          class="rounded-md px-3 py-2 text-sm text-slate-300 hover:bg-slate-800"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          [disabled]="!newBoardName.trim() || !newBoardWorkspaceId"
+          class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Create board
+        </button>
+      </div>
+    </form>
+
+    <form
+      *ngIf="mode === 'workspace'"
+      (ngSubmit)="submitCreateWorkspace()"
+      class="space-y-4"
+    >
+      <div>
+        <label class="mb-1 block text-xs font-medium text-slate-300">Workspace name</label>
+        <input
+          type="text"
+          name="wsName"
+          [(ngModel)]="newWorkspaceName"
+          placeholder="e.g. Design team"
+          required
+          class="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-500"
+        />
+      </div>
+
+      <div>
+        <label class="mb-1 block text-xs font-medium text-slate-300">Access</label>
+        <div class="flex gap-2">
+          <button
+            type="button"
+            (click)="newWorkspaceAccess = 'Public'"
+            class="flex-1 rounded-md border px-3 py-2 text-sm transition"
+            [class.border-indigo-500]="newWorkspaceAccess === 'Public'"
+            [class.bg-indigo-500/10]="newWorkspaceAccess === 'Public'"
+            [class.text-white]="newWorkspaceAccess === 'Public'"
+            [class.border-slate-700]="newWorkspaceAccess !== 'Public'"
+            [class.text-slate-300]="newWorkspaceAccess !== 'Public'"
+          >
+            Public
+          </button>
+          <button
+            type="button"
+            (click)="newWorkspaceAccess = 'Privates'"
+            class="flex-1 rounded-md border px-3 py-2 text-sm transition"
+            [class.border-indigo-500]="newWorkspaceAccess === 'Privates'"
+            [class.bg-indigo-500/10]="newWorkspaceAccess === 'Privates'"
+            [class.text-white]="newWorkspaceAccess === 'Privates'"
+            [class.border-slate-700]="newWorkspaceAccess !== 'Privates'"
+            [class.text-slate-300]="newWorkspaceAccess !== 'Privates'"
+          >
+            Private
+          </button>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button
+          type="button"
+          (click)="closeModal()"
+          class="rounded-md px-3 py-2 text-sm text-slate-300 hover:bg-slate-800"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          [disabled]="!newWorkspaceName.trim()"
+          class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Create workspace
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

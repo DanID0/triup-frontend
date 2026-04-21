@@ -1,10 +1,61 @@
 <div
-  class="bg-white px-5 py-3 rounded-md cursor-pointer transition-transform duration-200 ease-in-out animate-fade-in"
-  draggable="true"
+  class="group relative rounded-md bg-slate-900/80 text-slate-100 shadow-sm border border-slate-800 hover:border-indigo-500/60 transition cursor-pointer overflow-hidden"
+  [attr.draggable]="!readonly"
   (dragstart)="onDragStart($event)"
   (dragend)="onDragEnd($event)"
+  (click)="onClick()"
 >
-  <h4>{{ task.name }}</h4>
-  <p>{{ task.description }}</p>
-  
+  <img
+    *ngIf="coverUrl"
+    [src]="coverUrl"
+    alt="cover"
+    class="h-24 w-full object-cover"
+  />
+
+  <div class="p-3 space-y-2">
+    <p class="text-sm leading-snug">{{ task.name }}</p>
+
+    <div class="flex items-center gap-2 flex-wrap">
+      <span
+        *ngIf="labelColor as lc"
+        class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+        [style.background]="lc.color + '1A'"
+        [style.color]="lc.color"
+      >
+        <span class="h-1.5 w-1.5 rounded-full" [style.background]="lc.color"></span>
+        {{ lc.text }}
+      </span>
+
+      <span
+        *ngIf="task.dueDate"
+        class="text-[10px] text-slate-400 inline-flex items-center gap-1"
+      >
+        📅 {{ task.dueDate | date: 'MMM d' }}
+      </span>
+
+      <span
+        *ngIf="task.completed"
+        class="text-[10px] text-emerald-400 inline-flex items-center gap-1"
+      >
+        ✓ Done
+      </span>
+    </div>
+
+    <div class="flex items-center gap-3 text-[11px] text-slate-400">
+      <span *ngIf="task.comments && task.comments.length" class="inline-flex items-center gap-1">
+        💬 {{ task.comments.length }}
+      </span>
+      <span *ngIf="task.attachments && task.attachments.length" class="inline-flex items-center gap-1">
+        📎 {{ task.attachments.length }}
+      </span>
+      <span *ngIf="task.assignee" class="ml-auto inline-flex items-center gap-1">
+        <span
+          class="flex h-5 w-5 items-center justify-center rounded-full bg-fuchsia-600 text-white text-[9px] font-semibold"
+          [title]="task.assignee.username"
+        >
+          {{ (task.assignee.username || '?').charAt(0).toUpperCase() }}
+        </span>
+      </span>
+    </div>
+  </div>
 </div>

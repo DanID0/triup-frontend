@@ -8,7 +8,7 @@ export const loadTasks = createAction(
 );
 export const loadTasksSuccess = createAction(
   '[Task] Load Tasks Success',
-  props<{ tasks: Task[] }>(),
+  props<{ tasks: Task[]; columnId?: string }>(),
 );
 export const loadTasksFailure = createAction(
   '[Task] Load Tasks Failure',

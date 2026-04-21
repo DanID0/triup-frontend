@@ -1,0 +1,286 @@
+<div
+  class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/80 p-4 backdrop-blur-sm"
+  (click)="closed.emit()"
+>
+  <div
+    class="relative mt-10 w-full max-w-3xl rounded-lg border border-slate-800 bg-slate-900 text-slate-100 shadow-2xl"
+    (click)="$event.stopPropagation()"
+  >
+    <button
+      type="button"
+      class="absolute right-3 top-3 text-slate-400 hover:text-white text-xl leading-none"
+      (click)="closed.emit()"
+      aria-label="Close"
+    >
+      ×
+    </button>
+
+    <div class="grid grid-cols-1 gap-6 p-6 md:grid-cols-[1fr_18rem]">
+      <div class="space-y-5">
+        <div class="flex items-start gap-3">
+          <button
+            type="button"
+            class="mt-1 h-6 w-6 shrink-0 rounded-full border-2"
+            [class.border-emerald-400]="editing.completed"
+            [class.bg-emerald-500]="editing.completed"
+            [class.border-slate-600]="!editing.completed"
+            (click)="toggleCompleted()"
+            [attr.aria-label]="editing.completed ? 'Mark not complete' : 'Mark complete'"
+          >
+            <span *ngIf="editing.completed" class="block text-white text-xs leading-6 text-center">✓</span>
+          </button>
+
+          <input
+            type="text"
+            class="w-full bg-transparent text-2xl font-semibold outline-none focus:border-b focus:border-indigo-500"
+            [(ngModel)]="editing.name"
+            (blur)="saveName()"
+            [readonly]="readonlyMode"
+          />
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+          <button
+            type="button"
+            class="inline-flex items-center gap-2 rounded-md border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm text-slate-200 hover:border-indigo-500"
+            (click)="showMembersPicker.set(!showMembersPicker())"
+            [disabled]="readonlyMode"
+          >
+            👤 {{ assigneeName }}
+          </button>
+
+          <button
+            type="button"
+            class="inline-flex items-center gap-2 rounded-md border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm text-slate-200 hover:border-indigo-500"
+            (click)="showDatePicker.set(!showDatePicker())"
+            [disabled]="readonlyMode"
+          >
+            🕒
+            <span *ngIf="editing.dueDate">{{ editing.dueDate | date: 'MMM d, yyyy' }}</span>
+            <span *ngIf="!editing.dueDate">Dates</span>
+          </button>
+
+          <button
+            type="button"
+            class="inline-flex items-center gap-2 rounded-md border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm text-slate-200 hover:border-indigo-500"
+            (click)="openFilePicker()"
+            [disabled]="readonlyMode || uploading()"
+          >
+            📎 {{ uploading() ? 'Uploading…' : 'Attachments' }}
+          </button>
+          <input
+            #fileInput
+            type="file"
+            accept="image/*"
+            class="hidden"
+            multiple
+            (change)="onFilesSelected($event)"
+          />
+        </div>
+
+        <div *ngIf="showMembersPicker()" class="rounded-md border border-slate-800 bg-slate-950 p-3">
+          <p class="mb-2 text-xs font-semibold text-slate-300">Assign to</p>
+          <div class="max-h-40 space-y-1 overflow-y-auto">
+            <button
+              type="button"
+              class="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm hover:bg-slate-800"
+              (click)="setAssignee(null)"
+            >
+              <span class="flex h-6 w-6 items-center justify-center rounded-full bg-slate-700 text-xs">∅</span>
+              Unassigned
+            </button>
+            <button
+              *ngFor="let m of members"
+              type="button"
+              class="flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm hover:bg-slate-800"
+              [class.bg-slate-800]="editing.assigneeId === m.user?.id"
+              (click)="setAssignee(m.user?.id || null)"
+            >
+              <span
+                class="flex h-6 w-6 items-center justify-center rounded-full bg-fuchsia-600 text-[10px] font-semibold text-white"
+              >
+                {{ (m.user?.username || '?').charAt(0).toUpperCase() }}
+              </span>
+              <span class="truncate">{{ m.user?.username }}</span>
+            </button>
+            <p *ngIf="!members.length" class="text-xs text-slate-500">No members yet.</p>
+          </div>
+        </div>
+
+        <div *ngIf="showDatePicker()" class="rounded-md border border-slate-800 bg-slate-950 p-3">
+          <p class="mb-2 text-xs font-semibold text-slate-300">Due date</p>
+          <input
+            type="date"
+            class="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white"
+            [value]="editing.dueDate || ''"
+            (change)="setDueDate($any($event.target).value || null)"
+          />
+          <button
+            type="button"
+            class="mt-2 text-[11px] text-slate-400 hover:text-slate-200"
+            (click)="setDueDate(null)"
+          >
+            Remove date
+          </button>
+        </div>
+
+        <section>
+          <h4 class="mb-2 text-sm font-semibold text-slate-300">Description</h4>
+          <div *ngIf="!descEditing() && !editing.description" class="text-sm text-slate-500">
+            <button
+              type="button"
+              class="w-full rounded-md border border-dashed border-slate-700 px-3 py-4 text-left text-sm text-slate-400 hover:border-indigo-500 hover:text-slate-200"
+              (click)="descEditing.set(true)"
+              [disabled]="readonlyMode"
+            >
+              Add a more detailed description…
+            </button>
+          </div>
+
+          <div *ngIf="!descEditing() && editing.description" class="text-sm text-slate-200 whitespace-pre-wrap cursor-pointer"
+               (click)="!readonlyMode && descEditing.set(true)">
+            {{ editing.description }}
+          </div>
+
+          <div *ngIf="descEditing()" class="space-y-2">
+            <textarea
+              rows="4"
+              class="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500"
+              [(ngModel)]="editing.description"
+              placeholder="Add a more detailed description..."
+            ></textarea>
+            <div class="flex gap-2">
+              <button
+                type="button"
+                class="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500"
+                (click)="saveDescription()"
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                class="rounded-md px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800"
+                (click)="descEditing.set(false); editing.description = task.description || ''"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section *ngIf="editing.attachments.length">
+          <h4 class="mb-2 text-sm font-semibold text-slate-300">Attachments</h4>
+          <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <div
+              *ngFor="let url of attachmentUrls(); let i = index"
+              class="group relative rounded-md overflow-hidden border border-slate-800 bg-slate-950"
+            >
+              <img [src]="url" alt="attachment" class="h-28 w-full object-cover" />
+              <button
+                *ngIf="!readonlyMode"
+                type="button"
+                class="absolute right-1 top-1 rounded-full bg-black/70 px-2 py-0.5 text-[10px] text-white opacity-0 group-hover:opacity-100"
+                (click)="removeAttachment(editing.attachments[i])"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h4 class="mb-2 text-sm font-semibold text-slate-300">Priority</h4>
+          <div class="flex gap-2">
+            <button
+              *ngFor="let p of priorities"
+              type="button"
+              class="rounded-full px-3 py-1 text-xs font-semibold transition"
+              [class.bg-indigo-600]="editing.priority === p"
+              [class.text-white]="editing.priority === p"
+              [class.bg-slate-800]="editing.priority !== p"
+              [class.text-slate-300]="editing.priority !== p"
+              (click)="setPriority(p)"
+              [disabled]="readonlyMode"
+            >
+              {{ p }}
+            </button>
+          </div>
+        </section>
+
+        <div *ngIf="!readonlyMode" class="pt-2">
+          <button
+            type="button"
+            class="text-xs text-red-400 hover:text-red-300"
+            (click)="onDelete()"
+          >
+            Delete card
+          </button>
+        </div>
+      </div>
+
+      <aside class="md:border-l md:border-slate-800 md:pl-6">
+        <h4 class="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-300">
+          💬 Comments and activity
+        </h4>
+
+        <div *ngIf="!readonlyMode" class="mb-4 flex items-start gap-2">
+          <span
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-fuchsia-600 text-xs font-semibold text-white"
+          >
+            {{ (currentUser()?.username || '?').charAt(0).toUpperCase() }}
+          </span>
+          <div class="flex-1 space-y-2">
+            <textarea
+              rows="2"
+              class="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white outline-none focus:border-indigo-500"
+              placeholder="Write a comment..."
+              [ngModel]="newComment()"
+              (ngModelChange)="newComment.set($event)"
+            ></textarea>
+            <button
+              type="button"
+              class="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 disabled:opacity-50"
+              (click)="addComment()"
+              [disabled]="!newComment().trim()"
+            >
+              Save
+            </button>
+          </div>
+        </div>
+
+        <div class="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
+          <div *ngIf="!comments().length" class="text-xs text-slate-500">
+            No activity yet.
+          </div>
+          <div *ngFor="let c of comments()" class="flex items-start gap-2">
+            <span
+              class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-fuchsia-600 text-xs font-semibold text-white"
+            >
+              {{ (c.user?.username || '?').charAt(0).toUpperCase() }}
+            </span>
+            <div class="flex-1">
+              <div class="text-xs text-slate-300">
+                <span class="font-medium">{{ c.user?.username }}</span>
+                added this comment
+              </div>
+              <div class="rounded-md bg-slate-800 px-3 py-2 text-sm text-slate-100 mt-1 whitespace-pre-wrap">
+                {{ c.content }}
+              </div>
+              <div class="mt-1 flex items-center gap-3 text-[11px] text-indigo-300">
+                <span>{{ c.createdAt | date: 'MMM d, yyyy, h:mm a' }}</span>
+                <button
+                  *ngIf="!readonlyMode && c.userId === currentUser()?.id"
+                  type="button"
+                  class="text-red-300 hover:text-red-200"
+                  (click)="removeComment(c.id)"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</div>

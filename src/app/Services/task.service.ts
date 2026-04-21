@@ -13,7 +13,18 @@ export interface CreateTaskPayload {
 }
 
 export type UpdateTaskPayload = Partial<
-  Pick<Task, 'name' | 'description' | 'dueDate' | 'priority' | 'assigneeId' | 'columnId'>
+  Pick<
+    Task,
+    | 'name'
+    | 'description'
+    | 'dueDate'
+    | 'priority'
+    | 'assigneeId'
+    | 'columnId'
+    | 'completed'
+    | 'labels'
+    | 'attachments'
+  >
 >;
 
 @Injectable({

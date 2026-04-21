@@ -1,0 +1,147 @@
+<div
+  class="absolute right-0 top-12 z-30 w-80 rounded-lg border border-slate-800 bg-slate-950 text-slate-100 shadow-2xl"
+  (click)="$event.stopPropagation()"
+>
+  <header class="flex items-center justify-between border-b border-slate-800 px-4 py-3">
+    <h3 class="text-sm font-semibold">Assignees</h3>
+    <button
+      type="button"
+      class="text-slate-400 hover:text-white text-lg leading-none"
+      (click)="closed.emit()"
+      aria-label="Close"
+    >
+      ×
+    </button>
+  </header>
+
+  <div class="max-h-[60vh] overflow-y-auto px-4 py-3 space-y-2">
+    <div *ngIf="error() as e" class="rounded border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+      {{ e }}
+    </div>
+
+    <div *ngIf="!members.length" class="text-xs text-slate-400">
+      No members yet.
+    </div>
+
+    <div
+      *ngFor="let m of members"
+      class="flex items-center gap-3 rounded-md px-2 py-1 hover:bg-slate-900"
+    >
+      <span
+        class="flex h-8 w-8 items-center justify-center rounded-full bg-fuchsia-600 text-white text-xs font-semibold"
+      >
+        {{ (m.user?.username || '?').charAt(0).toUpperCase() }}
+      </span>
+      <div class="flex-1 min-w-0">
+        <div class="truncate text-sm">{{ m.user?.username }}</div>
+        <div class="truncate text-[11px] text-slate-400">{{ m.user?.email }}</div>
+      </div>
+
+      <select
+        *ngIf="canManage"
+        class="rounded-md border border-slate-700 bg-slate-800 px-2 py-1 text-[11px] text-slate-200"
+        [value]="m.invitedUserRights"
+        (change)="changeRights(m, $any($event.target).value)"
+        [disabled]="busy()"
+      >
+        <option *ngFor="let r of rightsOptions" [value]="r">{{ r }}</option>
+      </select>
+
+      <button
+        *ngIf="canManage"
+        type="button"
+        class="text-[11px] text-red-300 hover:text-red-200"
+        (click)="removeMember(m)"
+        [disabled]="busy()"
+      >
+        Edit
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="canManage" class="border-t border-slate-800 px-4 py-3 space-y-2">
+    <div *ngIf="!adding()" class="flex items-center justify-between">
+      <button
+        type="button"
+        class="inline-flex items-center gap-2 text-sm text-indigo-300 hover:text-indigo-200"
+        (click)="adding.set(true)"
+      >
+        + Share
+      </button>
+
+      <div class="flex items-center gap-2">
+        <button
+          *ngIf="!board.shareToken"
+          type="button"
+          class="rounded-md bg-indigo-600 px-3 py-1 text-xs font-semibold text-white hover:bg-indigo-500"
+          (click)="toggleShare()"
+          [disabled]="busy()"
+        >
+          Create link
+        </button>
+        <button
+          *ngIf="board.shareToken"
+          type="button"
+          class="rounded-md border border-slate-700 px-3 py-1 text-xs text-slate-200 hover:bg-slate-800"
+          (click)="copyShareLink()"
+        >
+          {{ copyNotice() ? 'Copied!' : 'Copy link' }}
+        </button>
+        <button
+          *ngIf="board.shareToken"
+          type="button"
+          class="rounded-md border border-slate-700 px-2 py-1 text-[11px] text-slate-300 hover:bg-slate-800"
+          (click)="toggleShare()"
+          [disabled]="busy()"
+          title="Disable share link"
+        >
+          ×
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="board.shareToken" class="rounded-md bg-slate-900 px-2 py-1.5 text-[11px] text-slate-300 break-all">
+      {{ shareLink }}
+    </div>
+
+    <form
+      *ngIf="adding()"
+      (ngSubmit)="submitInvite()"
+      class="space-y-2"
+    >
+      <input
+        type="email"
+        class="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-500"
+        placeholder="member@example.com"
+        [ngModel]="newEmail()"
+        (ngModelChange)="newEmail.set($event)"
+        name="email"
+        required
+      />
+      <select
+        class="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white"
+        [ngModel]="newRights()"
+        (ngModelChange)="newRights.set($event)"
+        name="rights"
+      >
+        <option *ngFor="let r of rightsOptions" [value]="r">{{ r }}</option>
+      </select>
+      <div class="flex items-center justify-end gap-2">
+        <button
+          type="button"
+          class="rounded-md px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800"
+          (click)="adding.set(false); newEmail.set('')"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 disabled:opacity-50"
+          [disabled]="busy() || !newEmail().trim()"
+        >
+          Invite
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

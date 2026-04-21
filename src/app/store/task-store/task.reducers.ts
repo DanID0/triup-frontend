@@ -54,11 +54,14 @@ export const taskReducer = createReducer(
     error: null,
   })),
 
-  on(loadTasksSuccess, (state, { tasks }) => ({
-    ...state,
-    tasks,
-    loading: false,
-  })),
+  on(loadTasksSuccess, (state, { tasks, columnId }) => {
+    // When loaded for a specific column, replace only that column's tasks so
+    // loading tasks for multiple columns doesn't wipe each other out.
+    const others = columnId
+      ? state.tasks.filter((t) => t.columnId !== columnId)
+      : [];
+    return { ...state, tasks: [...others, ...tasks], loading: false };
+  }),
   on(loadTasksFailure, (state, { error }) => ({ ...state, loading: false, error })),
 
   on(loadTaskSuccess, (state, { task }) => ({

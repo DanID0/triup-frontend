@@ -3,6 +3,11 @@ import { HttpClient } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
 import { Board } from '../core/interface';
 
+export interface UpdateBoardPayload {
+  name?: string;
+  backgroundImageUrl?: string | null;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -30,7 +35,7 @@ export class BoardService {
     );
   }
 
-  async updateBoard(id: string, payload: Partial<Pick<Board, 'name'>>): Promise<Board> {
+  async updateBoard(id: string, payload: UpdateBoardPayload): Promise<Board> {
     return await lastValueFrom(
       this.http.patch<Board>(`${this.apiUrl}/${id}`, payload, { withCredentials: true }),
     );

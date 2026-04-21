@@ -1,0 +1,64 @@
+<div class="relative flex min-h-screen flex-col text-slate-100" [ngStyle]="backgroundStyle">
+  <div class="absolute inset-0 bg-slate-950/40 pointer-events-none"></div>
+
+  <header class="relative z-20 flex items-center justify-between gap-4 border-b border-white/10 bg-slate-950/60 backdrop-blur px-4 py-2">
+    <a routerLink="/" class="flex items-center gap-2 text-sm font-semibold">
+      <span class="inline-block h-6 w-6 rounded bg-linear-to-br from-orange-400 to-red-500"></span>
+      <span>TaskM</span>
+    </a>
+    <a
+      routerLink="/login"
+      class="rounded-md bg-indigo-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500"
+    >
+      Log-in
+    </a>
+  </header>
+
+  <div
+    *ngIf="board() as b"
+    class="relative z-20 flex items-center gap-3 border-b border-white/10 bg-slate-950/40 px-4 py-2"
+  >
+    <h1 class="text-base font-semibold">{{ b.name }}</h1>
+    <span class="ml-2 rounded-full bg-slate-800 px-2 py-0.5 text-[10px] uppercase tracking-wide text-slate-300">
+      Read-only · shared link
+    </span>
+  </div>
+
+  <main class="relative z-10 flex-1 overflow-x-auto">
+    <div *ngIf="error() as e" class="m-6 rounded-md border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+      {{ e }}
+    </div>
+
+    <div class="flex gap-3 px-4 py-4 items-start min-w-max">
+      <div
+        *ngFor="let col of board()?.columns || []; trackBy: trackColumn"
+        class="w-72 shrink-0 rounded-md bg-slate-900/80 border border-slate-800 shadow-lg"
+      >
+        <div class="flex items-center justify-between gap-2 px-3 py-2 border-b border-slate-800">
+          <span class="flex-1 text-sm font-semibold text-white">{{ col.name }}</span>
+        </div>
+
+        <div class="flex max-h-[calc(100vh-240px)] flex-col gap-2 overflow-y-auto px-3 py-3">
+          <app-task
+            *ngFor="let t of col.tasks || []; trackBy: trackTask"
+            [task]="t"
+            [readonly]="true"
+            (open)="openTask($event)"
+          ></app-task>
+
+          <div *ngIf="!col.tasks?.length" class="text-xs text-slate-500 italic">
+            No cards.
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <app-task-modal
+    *ngIf="selectedTask() as t"
+    [task]="t"
+    [members]="[]"
+    [readonlyMode]="true"
+    (closed)="closeTask()"
+  ></app-task-modal>
+</div>

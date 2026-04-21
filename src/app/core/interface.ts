@@ -1,108 +1,121 @@
 export enum Language {
-    LATVIAN = 'LATVIAN',
-    ENGLISH = 'ENGLISH',
-    RUSSIAN = 'RUSSIAN'
-  }
-  enum AccessType {
-    Public = 'Public',
-    Privates = 'Privates'
-  }
-  enum InvitedUserRights {
-    Guest = 'Guest',
-    Member = 'Member',
-    Admin = 'Admin'
-  }
-  enum Priority {
-    Low = 'Low',
-    Medium = 'Medium',
-    High = 'High'
-  }
-export interface User {
-    id: string;
-    username: string;
-    email: string;
-    interfaceLanguage: Language;
-    Workspace: Workspace[];
-    Tasks: Task[];
-    Comments: Comment[];
-    UserBoard: UserBoard[];
-    UserWorkspace: UserWorkspace[];
+  LATVIAN = 'LATVIAN',
+  ENGLISH = 'ENGLISH',
+  RUSSIAN = 'RUSSIAN',
 }
-export interface UserWorkspace{
+
+export enum AccessType {
+  Public = 'Public',
+  Privates = 'Privates',
+}
+
+export enum InvitedUserRights {
+  Guest = 'Guest',
+  Member = 'Member',
+  Admin = 'Admin',
+}
+
+export enum Priority {
+  Low = 'Low',
+  Medium = 'Medium',
+  High = 'High',
+}
+
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  interfaceLanguage: Language;
+  Workspace?: Workspace[];
+  Tasks?: Task[];
+  Comments?: Comment[];
+  UserBoard?: UserBoard[];
+  UserWorkspace?: UserWorkspace[];
+}
+
+export interface UserWorkspace {
   id: string;
   userId: string;
-  user: User;
-  Workspace:Workspace;
+  user?: User;
+  workspaceId: string;
+  workspace?: Workspace;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface Workspace{
+export interface Workspace {
   id: string;
   userId: string;
-  user: User;
+  user?: User;
   name: string;
   accessType: AccessType;
   createdAt: string;
   updatedAt: string;
-  Boards: Board[];
-  UserWorkspace: UserWorkspace[];
+  Boards?: Board[];
+  UserWorkspace?: UserWorkspace[];
 }
-export interface Board{
+
+export interface Board {
   id: string;
   workspaceId: string;
   name: string;
-  Workspace:Workspace;
-  UserBoard: UserBoard[];
+  backgroundImageUrl?: string | null;
+  shareToken?: string | null;
+  workspace?: Workspace;
+  UserBoard?: UserBoard[];
   createdAt: string;
   updatedAt: string;
-  columns: Column[]
+  columns?: Column[];
 }
 
-export interface UserBoard{
+export interface UserBoard {
   id: string;
   userId: string;
-  user: User;
+  user?: User;
   boardId: string;
-  board:Board;
+  board?: Board;
   invitedUserRights: InvitedUserRights;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface Column{
+export interface Column {
   id: string;
-  name:string;
+  name: string;
   boardId: string;
-  board:Board;
-  position: bigint;
+  board?: Board;
+  position: number;
   color: string;
   createdAt: string;
   updatedAt: string;
-  tasks: Task[];
+  tasks?: Task[];
 }
 
-export interface Task{
+export interface Task {
   id: string;
   columnId: string;
-  column:Column;
-  name:string;
-  description:string;
+  column?: Column;
+  name: string;
+  description?: string | null;
   priority: Priority;
-  dueDate: string;
-  assigneeId: string;
-  asignee: User;
+  dueDate?: string | null;
+  completed?: boolean;
+  labels?: string[];
+  attachments?: string[];
+  assigneeId?: string | null;
+  assignee?: User | null;
   createdAt: string;
   updatedAt: string;
-  comments: Comment[];
+  comments?: Comment[];
 }
-  export interface Comment{
-    id: string;
-    taskId: string;
-    task: Task;
-    userId:string;
-    user: User;
-    content:string;
-    createdAt: string;
-    updatedAt: string;
-  }
+
+export interface Comment {
+  id: string;
+  taskId: string;
+  task?: Task;
+  userId: string;
+  user?: User;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}

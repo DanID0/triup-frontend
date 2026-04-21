@@ -1,19 +1,258 @@
-<div class="flex max-w-7xl mx-auto gap-4 mt-4">
-    @for (column of columns; track column.id) {
-        <div
-        class="relative bg-gray-200 w-full rounded-md p-4 flex-1 transition-colors duration-300"
-        (drop)="onDrop($event, column.id)"
-        (dragover)="$event.preventDefault()"
+<div class="relative flex min-h-screen flex-col text-slate-100" [ngStyle]="backgroundStyle">
+  <div class="absolute inset-0 bg-slate-950/40 pointer-events-none"></div>
+
+  <header class="relative z-20 flex items-center justify-between gap-4 border-b border-white/10 bg-slate-950/60 backdrop-blur px-4 py-2">
+    <a routerLink="/workboard" class="flex items-center gap-2 text-sm font-semibold">
+      <span class="inline-block h-6 w-6 rounded bg-linear-to-br from-orange-400 to-red-500"></span>
+      <span>TaskM</span>
+    </a>
+
+    <div *ngIf="user()" class="flex items-center gap-2">
+      <div class="hidden sm:block">
+        <label class="relative block">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">🔍</span>
+          <input
+            type="text"
+            placeholder="Search"
+            class="w-48 rounded-full border border-white/10 bg-slate-900/60 pl-7 pr-3 py-1 text-xs text-white placeholder-slate-400 outline-none focus:border-indigo-500"
+          />
+        </label>
+      </div>
+      <button
+        type="button"
+        class="inline-flex items-center gap-1 rounded-md bg-indigo-500 px-3 py-1 text-xs font-semibold text-white hover:bg-indigo-400"
       >
-        <h3 class="font-bold mb-4 text-lg text-gray-600">
-          {{ column.name }}
-        </h3>
-  
-        <div class="flex flex-col gap-4">
-          @for (task of column.tasks; track task.id) {
-            <app-task [task]="task"></app-task>
-          }
+        Create
+      </button>
+      <div
+        class="flex h-7 w-7 items-center justify-center rounded-full bg-linear-to-br from-fuchsia-500 to-pink-500 text-xs font-semibold ring-2 ring-slate-900"
+        [title]="user()?.username || 'Account'"
+      >
+        {{ (user()?.username || '?').charAt(0).toUpperCase() }}
+      </div>
+    </div>
+
+    <div *ngIf="!user()" class="flex items-center gap-2">
+      <a
+        routerLink="/login"
+        class="rounded-md bg-indigo-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500"
+      >
+        Log-in
+      </a>
+    </div>
+  </header>
+
+  <div
+    *ngIf="user()"
+    class="relative z-20 flex flex-wrap items-center gap-3 border-b border-white/10 bg-slate-950/40 px-4 py-2"
+  >
+    <div class="flex items-center gap-2">
+      <h1 class="text-base font-semibold">{{ board()?.name || 'Board' }}</h1>
+      <button
+        type="button"
+        class="text-slate-300 hover:text-yellow-300"
+        (click)="starred.set(!starred())"
+        [attr.aria-label]="starred() ? 'Unstar' : 'Star'"
+      >
+        {{ starred() ? '★' : '☆' }}
+      </button>
+    </div>
+
+    <div class="ml-auto flex items-center gap-2 relative" (click)="$event.stopPropagation()">
+      <button
+        type="button"
+        class="inline-flex items-center gap-1 rounded-full border border-white/20 bg-slate-900/70 px-3 py-1 text-xs hover:border-indigo-500"
+        (click)="filterOpen.set(!filterOpen()); assigneesOpen.set(false); menuOpen.set(false)"
+      >
+        <span>▽</span> Filter
+      </button>
+
+      <button
+        type="button"
+        class="inline-flex items-center gap-1 rounded-full border border-white/20 bg-slate-900/70 px-3 py-1 text-xs hover:border-indigo-500"
+        (click)="assigneesOpen.set(!assigneesOpen()); filterOpen.set(false); menuOpen.set(false)"
+      >
+        <span>👤</span> Assignees
+      </button>
+
+      <app-assignees-panel
+        *ngIf="assigneesOpen() && board()"
+        [board]="board()!"
+        [members]="members()"
+        [canManage]="isOwner"
+        (closed)="assigneesOpen.set(false)"
+        (membersChanged)="members.set($event)"
+        (boardChanged)="onBoardChanged($event)"
+      ></app-assignees-panel>
+
+      <label class="relative block">
+        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">🔍</span>
+        <input
+          type="text"
+          placeholder="Search task"
+          class="w-40 rounded-full border border-white/20 bg-slate-900/70 pl-7 pr-3 py-1 text-xs text-white placeholder-slate-400 outline-none focus:border-indigo-500"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+        />
+      </label>
+
+      <button
+        type="button"
+        class="rounded-md px-2 py-1 text-lg text-slate-200 hover:bg-slate-800/60"
+        (click)="menuOpen.set(!menuOpen()); filterOpen.set(false); assigneesOpen.set(false)"
+        aria-label="Menu"
+      >
+        ≡
+      </button>
+
+      <div
+        *ngIf="menuOpen()"
+        class="absolute right-0 top-10 z-30 w-52 rounded-md border border-slate-800 bg-slate-950 text-sm shadow-2xl"
+      >
+        <button
+          type="button"
+          class="flex w-full items-center gap-2 px-4 py-2 text-left hover:bg-slate-900"
+          (click)="onBoardImageClick(); menuOpen.set(false)"
+        >
+          🖼️ Change background
+        </button>
+        <button
+          *ngIf="board()?.backgroundImageUrl"
+          type="button"
+          class="flex w-full items-center gap-2 px-4 py-2 text-left hover:bg-slate-900"
+          (click)="clearBoardBackground(); menuOpen.set(false)"
+        >
+          🧹 Remove background
+        </button>
+        <button
+          type="button"
+          class="flex w-full items-center gap-2 px-4 py-2 text-left hover:bg-slate-900"
+          (click)="menuOpen.set(false); onLogout()"
+        >
+          🚪 Log out
+        </button>
+      </div>
+
+      <input
+        #boardImageInput
+        type="file"
+        accept="image/*"
+        class="hidden"
+        (change)="onBoardImageSelected($event)"
+      />
+    </div>
+  </div>
+
+  <main class="relative z-10 flex-1 overflow-x-auto">
+    <div class="flex gap-3 px-4 py-4 items-start min-w-max">
+      <div
+        *ngFor="let col of filteredColumns; trackBy: trackColumn"
+        class="w-72 shrink-0 rounded-md bg-slate-900/80 border border-slate-800 shadow-lg"
+        (dragover)="onDragOver($event)"
+        (drop)="onDrop($event, col.id)"
+      >
+        <div class="flex items-center justify-between gap-2 px-3 py-2 border-b border-slate-800">
+          <input
+            class="flex-1 bg-transparent text-sm font-semibold text-white outline-none focus:border-b focus:border-indigo-500"
+            [value]="col.name"
+            (blur)="renameColumn(col, $any($event.target).value)"
+          />
+          <button
+            type="button"
+            class="text-slate-400 hover:text-white text-xs"
+            (click)="removeColumn(col)"
+            title="Delete list"
+          >
+            ⋯
+          </button>
+        </div>
+
+        <div class="flex max-h-[calc(100vh-240px)] flex-col gap-2 overflow-y-auto px-3 py-3">
+          <app-task
+            *ngFor="let t of col.tasks; trackBy: trackTask"
+            [task]="t"
+            (open)="openTask($event)"
+          ></app-task>
+
+          <div *ngIf="!col.tasks.length" class="text-xs text-slate-500 italic">
+            Drop cards here
+          </div>
+        </div>
+
+        <div class="px-3 pb-3 pt-1">
+          <label class="block">
+            <input
+              type="text"
+              placeholder="+ Add a card"
+              class="w-full rounded-md bg-slate-800/60 px-3 py-2 text-xs text-white placeholder-slate-400 outline-none focus:bg-slate-800 focus:ring-1 focus:ring-indigo-500"
+              [(ngModel)]="newCardNameByColumn[col.id]"
+              (keyup.enter)="addCard(col)"
+            />
+          </label>
         </div>
       </div>
-    }
-  </div>
+
+      <div class="w-72 shrink-0">
+        <div *ngIf="!addingListVisible()">
+          <button
+            type="button"
+            class="flex w-full items-center gap-2 rounded-md bg-white/10 px-3 py-2 text-sm text-white hover:bg-white/20 backdrop-blur"
+            (click)="addingListVisible.set(true)"
+          >
+            + Add another list
+          </button>
+        </div>
+
+        <div
+          *ngIf="addingListVisible()"
+          class="rounded-md border border-slate-800 bg-slate-900 p-3 space-y-2"
+        >
+          <input
+            type="text"
+            class="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-500"
+            placeholder="Enter list title..."
+            [(ngModel)]="newListName"
+            (keyup.enter)="addColumn()"
+            autofocus
+          />
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              class="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 disabled:opacity-50"
+              [disabled]="!newListName.trim()"
+              (click)="addColumn()"
+            >
+              Add list
+            </button>
+            <button
+              type="button"
+              class="rounded-md px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800"
+              (click)="addingListVisible.set(false); newListName = ''"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <app-filter-panel
+    *ngIf="filterOpen()"
+    [value]="filter()"
+    [members]="members()"
+    [labels]="availableLabels()"
+    (valueChange)="setFilter($event)"
+    (closed)="filterOpen.set(false)"
+  ></app-filter-panel>
+
+  <app-task-modal
+    *ngIf="selectedTask() as t"
+    [task]="t"
+    [members]="members()"
+    [readonlyMode]="!user()"
+    (closed)="closeTask()"
+    (save)="saveTask($event)"
+    (delete)="deleteTaskCard($event)"
+  ></app-task-modal>
+</div>

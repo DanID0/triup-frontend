@@ -1,0 +1,256 @@
+<aside
+  class="fixed top-0 right-0 z-40 flex h-full w-80 max-w-[90vw] flex-col border-l border-slate-800 bg-slate-950 text-slate-100 shadow-2xl"
+  (click)="$event.stopPropagation()"
+>
+  <header class="flex items-center justify-between border-b border-slate-800 px-4 py-3">
+    <h3 class="text-sm font-semibold">Filter</h3>
+    <button
+      type="button"
+      class="text-slate-400 hover:text-white text-lg leading-none"
+      (click)="closed.emit()"
+      aria-label="Close"
+    >
+      ×
+    </button>
+  </header>
+
+  <div class="flex-1 overflow-y-auto px-4 py-4 space-y-6 text-sm">
+    <section>
+      <label class="mb-1 block text-xs font-semibold text-slate-300">Keyword</label>
+      <input
+        type="text"
+        [(ngModel)]="value.keyword"
+        (ngModelChange)="emit()"
+        placeholder="Enter a key word..."
+        class="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-500"
+      />
+      <p class="mt-1 text-[11px] text-slate-500">
+        Search cards, members, labels, and more.
+      </p>
+    </section>
+
+    <section>
+      <h4 class="mb-2 text-xs font-semibold text-slate-300">Members</h4>
+      <div class="space-y-2">
+        <label class="flex items-center gap-2">
+          <input
+            type="radio"
+            name="member-mode"
+            class="accent-indigo-500"
+            [checked]="value.members === 'any'"
+            (change)="setMembers('any')"
+          />
+          <span>Any</span>
+        </label>
+        <label class="flex items-center gap-2">
+          <input
+            type="radio"
+            name="member-mode"
+            class="accent-indigo-500"
+            [checked]="value.members === 'none'"
+            (change)="setMembers('none')"
+          />
+          <span class="inline-flex items-center gap-2">
+            <span
+              class="flex h-5 w-5 items-center justify-center rounded-full bg-slate-700 text-[10px]"
+            >
+              ∅
+            </span>
+            No members
+          </span>
+        </label>
+        <label class="flex items-center gap-2">
+          <input
+            type="radio"
+            name="member-mode"
+            class="accent-indigo-500"
+            [checked]="value.members === 'me'"
+            (change)="setMembers('me')"
+          />
+          <span class="inline-flex items-center gap-2">
+            <span
+              class="flex h-5 w-5 items-center justify-center rounded-full bg-fuchsia-600 text-white text-[10px]"
+            >
+              M
+            </span>
+            Cards assigned to me
+          </span>
+        </label>
+
+        <button
+          type="button"
+          class="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-left text-xs text-slate-300 hover:border-indigo-500"
+          (click)="showMembers.set(!showMembers())"
+        >
+          {{ showMembers() ? 'Hide members ▲' : 'Select members ▾' }}
+        </button>
+
+        <div *ngIf="showMembers()" class="space-y-2 pl-1">
+          <label
+            *ngFor="let m of members"
+            class="flex items-center gap-2 text-xs"
+          >
+            <input
+              type="checkbox"
+              class="accent-indigo-500"
+              [checked]="isMemberSelected(m.user?.id || '')"
+              (change)="toggleMember(m.user?.id || '')"
+            />
+            <span
+              class="flex h-5 w-5 items-center justify-center rounded-full bg-fuchsia-600 text-white text-[10px]"
+            >
+              {{ (m.user?.username || '?').charAt(0).toUpperCase() }}
+            </span>
+            <span class="truncate">{{ m.user?.username }}</span>
+          </label>
+          <p *ngIf="!members.length" class="text-[11px] text-slate-500">
+            No members yet.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h4 class="mb-2 text-xs font-semibold text-slate-300">Card status</h4>
+      <div class="space-y-2">
+        <label class="flex items-center gap-2">
+          <input
+            type="radio"
+            name="card-status"
+            class="accent-indigo-500"
+            [checked]="value.cardStatus === 'complete'"
+            (change)="value.cardStatus = 'complete'; emit()"
+          />
+          <span>Marked as complete</span>
+        </label>
+        <label class="flex items-center gap-2">
+          <input
+            type="radio"
+            name="card-status"
+            class="accent-indigo-500"
+            [checked]="value.cardStatus === 'incomplete'"
+            (change)="value.cardStatus = 'incomplete'; emit()"
+          />
+          <span>Marked as not complete</span>
+        </label>
+        <label class="flex items-center gap-2">
+          <input
+            type="radio"
+            name="card-status"
+            class="accent-indigo-500"
+            [checked]="value.cardStatus === 'all'"
+            (change)="value.cardStatus = 'all'; emit()"
+          />
+          <span class="text-slate-400">Any</span>
+        </label>
+      </div>
+    </section>
+
+    <section>
+      <h4 class="mb-2 text-xs font-semibold text-slate-300">Due date</h4>
+      <div class="space-y-2">
+        <label class="flex items-center gap-2">
+          <input
+            type="radio"
+            name="due-date"
+            class="accent-indigo-500"
+            [checked]="value.dueDate === 'any'"
+            (change)="value.dueDate = 'any'; emit()"
+          />
+          <span class="text-slate-400">Any</span>
+        </label>
+        <label
+          *ngFor="let opt of dueDateOptions"
+          class="flex items-center gap-2"
+        >
+          <input
+            type="radio"
+            name="due-date"
+            class="accent-indigo-500"
+            [checked]="value.dueDate === opt.id"
+            (change)="value.dueDate = opt.id; emit()"
+          />
+          <span class="inline-flex items-center gap-2">
+            <span class="h-2.5 w-2.5 rounded-full" [style.background]="opt.color"></span>
+            {{ opt.label }}
+          </span>
+        </label>
+      </div>
+    </section>
+
+    <section>
+      <h4 class="mb-2 text-xs font-semibold text-slate-300">Labels</h4>
+      <div class="space-y-2">
+        <label class="flex items-center gap-2">
+          <input
+            type="radio"
+            name="label-mode"
+            class="accent-indigo-500"
+            [checked]="value.labels === 'any'"
+            (change)="setLabels('any')"
+          />
+          <span class="text-slate-400">Any</span>
+        </label>
+        <label class="flex items-center gap-2">
+          <input
+            type="radio"
+            name="label-mode"
+            class="accent-indigo-500"
+            [checked]="value.labels === 'none'"
+            (change)="setLabels('none')"
+          />
+          <span>No labels</span>
+        </label>
+
+        <div class="space-y-1 pt-1">
+          <label
+            *ngFor="let l of labels"
+            class="flex items-center gap-2"
+          >
+            <input
+              type="checkbox"
+              class="accent-indigo-500"
+              [checked]="isLabelSelected(l.text)"
+              (change)="toggleLabel(l.text)"
+            />
+            <span
+              class="flex h-4 flex-1 items-center rounded px-2 text-[11px] font-medium text-white/90"
+              [style.background]="l.color"
+            >
+              {{ l.text }}
+            </span>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h4 class="mb-2 text-xs font-semibold text-slate-300">Activity</h4>
+      <div class="space-y-2">
+        <label class="flex items-center gap-2">
+          <input
+            type="radio"
+            name="activity"
+            class="accent-indigo-500"
+            [checked]="value.activity === 'any'"
+            (change)="value.activity = 'any'; emit()"
+          />
+          <span class="text-slate-400">Any</span>
+        </label>
+        <label
+          *ngFor="let opt of activityOptions"
+          class="flex items-center gap-2"
+        >
+          <input
+            type="radio"
+            name="activity"
+            class="accent-indigo-500"
+            [checked]="value.activity === opt.id"
+            (change)="value.activity = opt.id; emit()"
+          />
+          <span>{{ opt.label }}</span>
+        </label>
+      </div>
+    </section>
+  </div>
+</aside>

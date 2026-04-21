@@ -32,9 +32,9 @@ export class TaskEffects {
   loadTasks$ = createEffect(() =>
     this.actions$.pipe(
       ofType(loadTasks),
-      switchMap(({ columnId }) =>
+      mergeMap(({ columnId }) =>
         from(this.taskService.getTasks(columnId)).pipe(
-          map((tasks) => loadTasksSuccess({ tasks })),
+          map((tasks) => loadTasksSuccess({ tasks, columnId })),
           catchError((error) => of(loadTasksFailure({ error: error.message }))),
         ),
       ),

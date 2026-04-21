@@ -1,40 +1,40 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { RouterLink, RouterOutlet } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { Subscription } from 'rxjs';
-import { selectUser } from '../../store/user-store/user.selectors';
-import { getUser } from '../../store/user-store/user.actions';
-import { User } from '../../core/interface';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
+import { selectUser } from '../../store/user-store/user.selectors';
+import { getUser, logOut } from '../../store/user-store/user.actions';
+import { User } from '../../core/interface';
+
 @Component({
   selector: 'app-layoutv1',
+  standalone: true,
   imports: [RouterOutlet, CommonModule, RouterLink],
   templateUrl: './layoutv1.html',
   styleUrl: './layoutv1.css',
 })
-export class Layoutv1 implements OnInit, OnDestroy {
+export class Layoutv1 implements OnInit {
+  private readonly store = inject(Store);
+  private readonly destroyRef = inject(DestroyRef);
+
   userProfileData: User | null = null;
   isLoggedIn = false;
-  private userSubscription!: Subscription;
-
-  constructor(private store: Store) {}
 
   ngOnInit(): void {
     this.store.dispatch(getUser());
 
-    this.userSubscription = this.store.select(selectUser).subscribe((user) => {
-      if (user) {
+    this.store
+      .select(selectUser)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((user) => {
         this.userProfileData = user;
-        this.isLoggedIn = true;
-      } else {
-        this.userProfileData = null;
-        this.isLoggedIn = false;
-      }
-    });
+        this.isLoggedIn = !!user;
+      });
   }
 
-  ngOnDestroy(): void {
-    this.userSubscription.unsubscribe();
+  onLogout(): void {
+    this.store.dispatch(logOut());
   }
 }

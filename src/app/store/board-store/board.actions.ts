@@ -39,7 +39,10 @@ export const createBoardFailure = createAction(
 
 export const updateBoard = createAction(
   '[Board] Update Board',
-  props<{ id: string; payload: { name?: string } }>(),
+  props<{
+    id: string;
+    payload: { name?: string; backgroundImageUrl?: string | null };
+  }>(),
 );
 export const updateBoardSuccess = createAction(
   '[Board] Update Board Success',

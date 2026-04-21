@@ -1,23 +1,103 @@
-<section class="flex flex-row bg-[#ffffff] w-full justify-evenly">
-<img src="/assets/authimg.png" class="h-screen w-[50%]" alt="">
-<div class="flex flex-col items-center justify-center min-w-[50%] gap-6 ">
-    <h1 class="text-2xl font-bold">Welcome back to TaskM</h1>
-    <p class="text-sm text-gray-500">Organize your tasks effortlessly with TaskM.</p>
+<section class="flex min-h-screen flex-row bg-white">
+  <img src="/assets/authimg.png" class="hidden md:block h-screen w-[50%] object-cover" alt="" />
 
-        <div class="flex flex-col w-[405.25px] h-[52px] border rounded-md border-[#693CFC] justify-center">
-            <label class="text-sm text-gray-500">Username </label>
-            <input class="focus:outline-none" [(ngModel)]="username" />
-          </div>
-          <div class="flex flex-col w-[405.25px] h-[52px] border rounded-md border-[#693CFC] justify-center">
-            <label class="text-sm text-gray-500">Email</label>
-            <input class="focus:outline-none" [(ngModel)]="email" />
-          </div>
-          <div class="flex flex-col w-[405.25px] h-[52px] border rounded-md border-[#693CFC] justify-center">
-            <label class="text-sm text-gray-500">Password</label>
-            <input class="focus:outline-none" [(ngModel)]="password" />
-          </div>
-        <a href="" class="text-blue-500">Forgot password?</a>
-        <button class="bg-buttons text-white px-4 py-2 rounded-md w-[405px] h-10 " (click)="login()">Log-in</button>
-        
-</div>
+  <div class="flex flex-1 flex-col items-center justify-center gap-5 px-6 py-10">
+    <h1 class="text-2xl font-bold text-slate-900">{{ title() }}</h1>
+    <p class="text-sm text-gray-500">
+      {{
+        isSignup()
+          ? 'Start organizing your tasks with TaskM.'
+          : 'Organize your tasks effortlessly with TaskM.'
+      }}
+    </p>
+
+    <form (ngSubmit)="submit()" #authForm="ngForm" class="flex w-full max-w-md flex-col gap-4" novalidate>
+      <div
+        *ngIf="errorMessage() as err"
+        class="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700"
+        role="alert"
+      >
+        {{ err }}
+      </div>
+
+      <label *ngIf="isSignup()" class="flex flex-col gap-1">
+        <span class="text-xs font-medium text-gray-600">Username</span>
+        <input
+          name="username"
+          type="text"
+          autocomplete="username"
+          required
+          [(ngModel)]="username"
+          [disabled]="submitting()"
+          class="h-11 rounded-md border border-[#693CFC]/60 px-3 focus:border-[#693CFC] focus:outline-none focus:ring-1 focus:ring-[#693CFC] disabled:opacity-60"
+        />
+      </label>
+
+      <label class="flex flex-col gap-1">
+        <span class="text-xs font-medium text-gray-600">Email</span>
+        <input
+          name="email"
+          type="email"
+          autocomplete="email"
+          required
+          [(ngModel)]="email"
+          [disabled]="submitting()"
+          class="h-11 rounded-md border border-[#693CFC]/60 px-3 focus:border-[#693CFC] focus:outline-none focus:ring-1 focus:ring-[#693CFC] disabled:opacity-60"
+        />
+      </label>
+
+      <label class="flex flex-col gap-1">
+        <span class="text-xs font-medium text-gray-600">Password</span>
+        <input
+          name="password"
+          type="password"
+          [attr.autocomplete]="isSignup() ? 'new-password' : 'current-password'"
+          required
+          minlength="6"
+          [(ngModel)]="password"
+          [disabled]="submitting()"
+          class="h-11 rounded-md border border-[#693CFC]/60 px-3 focus:border-[#693CFC] focus:outline-none focus:ring-1 focus:ring-[#693CFC] disabled:opacity-60"
+        />
+      </label>
+
+      <a *ngIf="!isSignup()" href="#" class="text-sm text-blue-500 hover:underline"
+        >Forgot password?</a
+      >
+
+      <button
+        type="submit"
+        [disabled]="submitting() || !authForm.form.valid"
+        class="inline-flex h-11 items-center justify-center rounded-md bg-buttons px-4 text-sm font-semibold text-white shadow transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        <span *ngIf="!submitting()">{{ isSignup() ? 'Create account' : 'Log in' }}</span>
+        <span *ngIf="submitting()" class="flex items-center gap-2">
+          <span class="h-4 w-4 animate-spin rounded-full border-2 border-white/70 border-t-transparent"></span>
+          Please wait…
+        </span>
+      </button>
+
+      <p class="text-center text-sm text-gray-600">
+        <ng-container *ngIf="!isSignup()">
+          Don't have an account?
+          <button
+            type="button"
+            (click)="switchMode('signup')"
+            class="ml-1 font-medium text-blue-600 hover:underline"
+          >
+            Sign up
+          </button>
+        </ng-container>
+        <ng-container *ngIf="isSignup()">
+          Already have an account?
+          <button
+            type="button"
+            (click)="switchMode('login')"
+            class="ml-1 font-medium text-blue-600 hover:underline"
+          >
+            Log in
+          </button>
+        </ng-container>
+      </p>
+    </form>
+  </div>
 </section>
