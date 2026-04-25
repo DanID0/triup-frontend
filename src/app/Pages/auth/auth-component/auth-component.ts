@@ -49,15 +49,30 @@ export class AuthComponent implements OnInit {
       .select(selectUser)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((user) => {
-        if (user) this.router.navigate(['/workboard']);
+        if (user) this.router.navigateByUrl(this.resolveRedirect());
       });
+  }
+
+  /**
+   * Returns the URL to send the user to after a successful login, taken from
+   * the `redirect` query param when present (e.g. shared-link flow). Falls
+   * back to `/workboard`. Only same-origin paths are allowed to prevent
+   * open-redirect issues.
+   */
+  private resolveRedirect(): string {
+    const target = this.route.snapshot.queryParamMap.get('redirect');
+    if (target && target.startsWith('/')) return target;
+    return '/workboard';
   }
 
   switchMode(next: AuthMode): void {
     if (this.submitting()) return;
     this.mode.set(next);
     this.errorMessage.set(null);
-    this.router.navigate([`/${next}`]);
+    const redirect = this.route.snapshot.queryParamMap.get('redirect');
+    this.router.navigate([`/${next}`], {
+      queryParams: redirect ? { redirect } : undefined,
+    });
   }
 
   async submit(): Promise<void> {

@@ -56,8 +56,18 @@
             [disabled]="readonlyMode"
           >
             🕒
-            <span *ngIf="editing.dueDate">{{ editing.dueDate | date: 'MMM d, yyyy' }}</span>
+            <span *ngIf="editing.dueDate">
+              {{ editing.dueDate | date: 'MMM d, h:mm a' }}
+            </span>
             <span *ngIf="!editing.dueDate">Dates</span>
+            <span
+              *ngIf="dueStatus as s"
+              class="rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase text-white"
+              [style.background]="s.color"
+            >
+              {{ s.label }}
+            </span>
+            <span class="text-slate-400 text-xs">▾</span>
           </button>
 
           <button

@@ -30,12 +30,12 @@ export class AssigneesPanelComponent implements OnInit {
 
   private readonly membersService = inject(BoardMembersService);
 
-  readonly adding = signal(false);
-  readonly newEmail = signal('');
-  readonly newRights = signal<InvitedUserRights>(InvitedUserRights.Member);
+  readonly shareOpen = signal(false);
+  readonly shareTab = signal<'members'>('members');
   readonly busy = signal(false);
   readonly error = signal<string | null>(null);
   readonly copyNotice = signal(false);
+
   rightsOptions: InvitedUserRights[] = [
     InvitedUserRights.Guest,
     InvitedUserRights.Member,
@@ -44,9 +44,24 @@ export class AssigneesPanelComponent implements OnInit {
 
   ngOnInit(): void {}
 
+  // The shared link points to the regular board page (loaded via the share
+  // token route). The recipient lands on the same board UI, but read-only.
   get shareLink(): string {
-    if (!this.board.shareToken) return '';
+    if (!this.board?.shareToken) return '';
     return `${window.location.origin}/b/${this.board.shareToken}`;
+  }
+
+  isOwner(m: UserBoard): boolean {
+    return !!m.isOwner;
+  }
+
+  openShare() {
+    this.error.set(null);
+    this.shareOpen.set(true);
+  }
+
+  closeShare() {
+    this.shareOpen.set(false);
   }
 
   async toggleShare() {
@@ -64,6 +79,10 @@ export class AssigneesPanelComponent implements OnInit {
   }
 
   async copyShareLink() {
+    if (!this.board.shareToken) {
+      // Auto-create a link the first time the user clicks Copy.
+      await this.toggleShare();
+    }
     const link = this.shareLink;
     if (!link) return;
     try {
@@ -71,32 +90,12 @@ export class AssigneesPanelComponent implements OnInit {
       this.copyNotice.set(true);
       setTimeout(() => this.copyNotice.set(false), 1600);
     } catch {
-      // ignore clipboard failure
-    }
-  }
-
-  async submitInvite() {
-    const email = this.newEmail().trim();
-    if (!email) return;
-    this.busy.set(true);
-    this.error.set(null);
-    try {
-      const member = await this.membersService.add(
-        this.board.id,
-        email,
-        this.newRights(),
-      );
-      this.membersChanged.emit([...this.members, member]);
-      this.newEmail.set('');
-      this.adding.set(false);
-    } catch (e: any) {
-      this.error.set(e?.error?.message || e?.message || 'Failed to add member');
-    } finally {
-      this.busy.set(false);
+      // ignore clipboard failure (e.g. http context)
     }
   }
 
   async removeMember(m: UserBoard) {
+    if (this.isOwner(m)) return;
     this.busy.set(true);
     try {
       await this.membersService.remove(this.board.id, m.id);
@@ -109,9 +108,14 @@ export class AssigneesPanelComponent implements OnInit {
   }
 
   async changeRights(m: UserBoard, rights: InvitedUserRights) {
+    if (this.isOwner(m)) return;
     this.busy.set(true);
     try {
-      const updated = await this.membersService.update(this.board.id, m.id, rights);
+      const updated = await this.membersService.update(
+        this.board.id,
+        m.id,
+        rights,
+      );
       this.membersChanged.emit(
         this.members.map((x) => (x.id === m.id ? updated : x)),
       );

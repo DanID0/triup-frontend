@@ -27,10 +27,13 @@
       </span>
 
       <span
-        *ngIf="task.dueDate"
-        class="text-[10px] text-slate-400 inline-flex items-center gap-1"
+        *ngIf="dueBadge as d"
+        class="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold text-white"
+        [style.background]="d.color"
+        [title]="d.status"
       >
-        📅 {{ task.dueDate | date: 'MMM d' }}
+        <span aria-hidden="true">📅</span>
+        {{ d.label }}
       </span>
 
       <span

@@ -65,6 +65,14 @@ const COLUMN_COLORS = [
   '#06b6d4',
 ];
 
+const RECENT_BOARDS_KEY = 'triup:recentBoards';
+const RECENT_BOARDS_LIMIT = 5;
+const PRIORITY_LABELS: Record<Priority, { text: string; color: string }> = {
+  [Priority.High]: { text: 'Urgent', color: '#ef4444' },
+  [Priority.Medium]: { text: 'Important', color: '#eab308' },
+  [Priority.Low]: { text: 'No rush', color: '#22c55e' },
+};
+
 @Component({
   selector: 'app-board',
   standalone: true,
@@ -114,9 +122,8 @@ export class Board implements OnInit {
   readonly availableLabels = computed(() => {
     const set = new Map<string, string>();
     for (const t of this.tasks()) {
-      for (const raw of t.labels ?? []) {
-        const [text, color] = raw.split('|');
-        if (!set.has(text)) set.set(text, color || '#6366f1');
+      for (const item of this.getTaskLabels(t)) {
+        if (!set.has(item.text)) set.set(item.text, item.color);
       }
     }
     // Fallback canonical labels used in the UI
@@ -156,7 +163,10 @@ export class Board implements OnInit {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((b) => {
-        if (b) this.board.set(b);
+        if (b) {
+          this.board.set(b);
+          this.rememberRecentBoard(b);
+        }
       });
 
     // Columns of the current board + their tasks — combined into one projection
@@ -192,6 +202,25 @@ export class Board implements OnInit {
           })),
         );
       });
+  }
+
+  /**
+   * Persists the most recently opened boards to localStorage so they show up
+   * in the "Recently viewed" section on the workboard page – including boards
+   * the user reached via a shared link.
+   */
+  private rememberRecentBoard(board: BoardModel): void {
+    try {
+      const raw = localStorage.getItem(RECENT_BOARDS_KEY);
+      const list: BoardModel[] = raw ? JSON.parse(raw) : [];
+      const next = [board, ...list.filter((b) => b.id !== board.id)].slice(
+        0,
+        RECENT_BOARDS_LIMIT,
+      );
+      localStorage.setItem(RECENT_BOARDS_KEY, JSON.stringify(next));
+    } catch {
+      // localStorage may be unavailable – silently ignore.
+    }
   }
 
   async reloadMembers() {
@@ -247,9 +276,11 @@ export class Board implements OnInit {
     return this.columns().map((col) => ({
       ...col,
       tasks: col.tasks.filter((t) => {
+        const tlabels = this.getTaskLabels(t).map((l) => l.text);
         if (q && !t.name.toLowerCase().includes(q)) return false;
         if (kw) {
-          const hay = `${t.name} ${t.description ?? ''} ${(t.labels ?? []).join(' ')}`.toLowerCase();
+          const hay =
+            `${t.name} ${t.description ?? ''} ${tlabels.join(' ')}`.toLowerCase();
           if (!hay.includes(kw)) return false;
         }
         if (f.members === 'none' && t.assigneeId) return false;
@@ -268,7 +299,6 @@ export class Board implements OnInit {
         if (f.dueDate === 'nextWeek' && (!due || !within(7, due))) return false;
         if (f.dueDate === 'nextMonth' && (!due || !within(30, due))) return false;
 
-        const tlabels = (t.labels ?? []).map((l) => l.split('|')[0]);
         if (f.labels === 'none' && tlabels.length) return false;
         if (Array.isArray(f.labels)) {
           if (!tlabels.some((l) => (f.labels as string[]).includes(l))) return false;
@@ -289,6 +319,21 @@ export class Board implements OnInit {
 
   setFilter(f: BoardFilter) {
     this.filter.set(f);
+  }
+
+  /**
+   * Returns the labels used by filters/search. If a task has explicit labels,
+   * those are used. Otherwise we expose the same priority-derived badge labels
+   * shown on the task cards (Urgent/Important/No rush).
+   */
+  private getTaskLabels(task: Task): { text: string; color: string }[] {
+    if (task.labels?.length) {
+      return task.labels.map((raw) => {
+        const [text, color] = raw.split('|');
+        return { text: text || 'Label', color: color || '#6366f1' };
+      });
+    }
+    return [PRIORITY_LABELS[task.priority ?? Priority.Medium]];
   }
 
   // ---------- Columns ----------

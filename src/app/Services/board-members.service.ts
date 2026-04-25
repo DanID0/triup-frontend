@@ -77,4 +77,14 @@ export class BoardMembersService {
       }),
     );
   }
+
+  joinViaShareToken(token: string): Promise<Board> {
+    return lastValueFrom(
+      this.http.post<Board>(
+        `${this.apiUrl}/public/${token}/join`,
+        {},
+        { withCredentials: true },
+      ),
+    );
+  }
 }

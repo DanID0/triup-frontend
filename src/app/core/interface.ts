@@ -77,6 +77,7 @@ export interface UserBoard {
   invitedUserRights: InvitedUserRights;
   createdAt: string;
   updatedAt: string;
+  isOwner?: boolean;
 }
 
 export interface Column {

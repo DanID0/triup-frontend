@@ -125,6 +125,25 @@ export class TaskModalComponent implements OnInit, OnChanges {
     }
   }
 
+  /**
+   * Status pill that mirrors the filter buckets (Overdue / Due in the next
+   * day / week / month). Returned as null when the task has no due date so
+   * the template can hide the pill entirely.
+   */
+  get dueStatus(): { label: string; color: string } | null {
+    if (!this.editing.dueDate) return null;
+    const due = new Date(this.editing.dueDate);
+    if (Number.isNaN(due.getTime())) return null;
+    const now = new Date();
+    const diffDays = (due.getTime() - now.getTime()) / 86400000;
+    if (this.editing.completed) return { label: 'Complete', color: '#22c55e' };
+    if (diffDays < 0) return { label: 'Overdue', color: '#ef4444' };
+    if (diffDays <= 1) return { label: 'Due soon', color: '#f59e0b' };
+    if (diffDays <= 7) return { label: 'Due this week', color: '#22c55e' };
+    if (diffDays <= 30) return { label: 'Due this month', color: '#3b82f6' };
+    return null;
+  }
+
   get assigneeName(): string {
     if (!this.editing.assigneeId) return 'Members';
     const m = this.members.find((x) => x.user?.id === this.editing.assigneeId);
