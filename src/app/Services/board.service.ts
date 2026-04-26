@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
-import { Board } from '../core/interface';
+import { Board, BoardActivity } from '../core/interface';
 
 export interface UpdateBoardPayload {
   name?: string;
@@ -44,6 +44,12 @@ export class BoardService {
   async deleteBoard(id: string): Promise<void> {
     await lastValueFrom(
       this.http.delete<void>(`${this.apiUrl}/${id}`, { withCredentials: true }),
+    );
+  }
+
+  async getBoardActivity(id: string): Promise<BoardActivity[]> {
+    return await lastValueFrom(
+      this.http.get<BoardActivity[]>(`${this.apiUrl}/${id}/activity`, { withCredentials: true }),
     );
   }
 }

@@ -25,6 +25,7 @@ export interface User {
   id: string;
   username: string;
   email: string;
+  avatarUrl?: string | null;
   interfaceLanguage: Language;
   Workspace?: Workspace[];
   Tasks?: Task[];
@@ -66,6 +67,17 @@ export interface Board {
   createdAt: string;
   updatedAt: string;
   columns?: Column[];
+}
+
+export interface BoardActivity {
+  id: string;
+  boardId: string;
+  userId: string;
+  type: string;
+  message: string;
+  meta?: Record<string, unknown> | null;
+  createdAt: string;
+  user?: User;
 }
 
 export interface UserBoard {

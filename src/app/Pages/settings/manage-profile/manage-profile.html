@@ -1,0 +1,139 @@
+<section class="min-h-screen bg-[var(--ui-page)] p-6 text-[var(--ui-text)]">
+  <div
+    class="mx-auto max-w-4xl rounded-xl border border-[var(--ui-border)] bg-[var(--ui-elevated)] p-6 shadow-sm"
+  >
+    <div class="mb-8 flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-semibold">{{ 'manageProfile' | i18n }}</h1>
+        <p class="text-sm text-[var(--ui-text-muted)]">{{ 'updateAccountDetails' | i18n }}</p>
+      </div>
+      <a
+        routerLink="/workboard"
+        class="rounded-md border border-[var(--ui-border)] px-3 py-2 text-sm hover:bg-[var(--ui-surface-2)]"
+      >
+        {{ 'back' | i18n }}
+      </a>
+    </div>
+
+    <div class="mb-8 flex items-start gap-5">
+      <div class="relative">
+        <button
+          type="button"
+          class="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border border-[var(--ui-border)] bg-[var(--ui-surface-2)] text-3xl font-semibold"
+          (click)="avatarMenuOpen.set(!avatarMenuOpen())"
+        >
+          <img
+            *ngIf="avatarSrc(); else avatarFallback"
+            [src]="avatarSrc()!"
+            alt="Profile avatar"
+            class="h-full w-full object-cover"
+          />
+          <ng-template #avatarFallback>{{ avatarInitial() }}</ng-template>
+        </button>
+
+        <div
+          *ngIf="avatarMenuOpen()"
+          class="absolute left-0 top-[7.5rem] z-20 min-w-56 rounded-md border border-[var(--ui-border)] bg-[var(--ui-surface)] shadow-2xl"
+        >
+          <button
+            type="button"
+            class="block w-full px-4 py-3 text-left text-sm hover:bg-[var(--ui-surface-2)]"
+            (click)="openFilePicker()"
+          >
+            {{ 'changeProfilePhoto' | i18n }}
+          </button>
+          <button
+            type="button"
+            class="block w-full px-4 py-3 text-left text-sm text-[var(--ui-danger)] hover:bg-[var(--ui-surface-2)]"
+            (click)="removeAvatar()"
+          >
+            {{ 'remove' | i18n }}
+          </button>
+        </div>
+      </div>
+      <input #avatarInput type="file" accept="image/*" class="hidden" (change)="onAvatarSelected($event)" />
+    </div>
+
+    <form class="space-y-5" (ngSubmit)="saveProfile()">
+      <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <label class="flex flex-col gap-1">
+          <span class="text-sm text-[var(--ui-text-muted)]">{{ 'username' | i18n }}</span>
+          <input
+            name="username"
+            [(ngModel)]="username"
+            required
+            class="rounded-md border border-[var(--ui-border)] bg-[var(--ui-input)] px-3 py-2 text-sm text-[var(--ui-text)] outline-none focus:border-indigo-500"
+          />
+        </label>
+
+        <label class="flex flex-col gap-1">
+          <span class="text-sm text-[var(--ui-text-muted)]">{{ 'email' | i18n }}</span>
+          <input
+            name="email"
+            type="email"
+            [(ngModel)]="email"
+            required
+            class="rounded-md border border-[var(--ui-border)] bg-[var(--ui-input)] px-3 py-2 text-sm text-[var(--ui-text)] outline-none focus:border-indigo-500"
+          />
+        </label>
+
+        <label class="flex flex-col gap-1">
+          <span class="text-sm text-[var(--ui-text-muted)]">{{ 'password' | i18n }}</span>
+          <input
+            name="password"
+            type="password"
+            [(ngModel)]="password"
+            [placeholder]="'leavePasswordBlank' | i18n"
+            class="rounded-md border border-[var(--ui-border)] bg-[var(--ui-input)] px-3 py-2 text-sm text-[var(--ui-text)] outline-none focus:border-indigo-500"
+          />
+        </label>
+
+        <label class="flex flex-col gap-1" *ngIf="password.trim()">
+          <span class="text-sm text-[var(--ui-text-muted)]">{{ 'currentPassword' | i18n }}</span>
+          <input
+            name="oldPassword"
+            type="password"
+            [(ngModel)]="oldPassword"
+            [placeholder]="'currentPasswordRequired' | i18n"
+            class="rounded-md border border-[var(--ui-border)] bg-[var(--ui-input)] px-3 py-2 text-sm text-[var(--ui-text)] outline-none focus:border-indigo-500"
+          />
+        </label>
+      </div>
+
+      <label class="flex max-w-sm flex-col gap-1">
+        <span class="text-sm text-[var(--ui-text-muted)]">{{ 'interfaceLanguage' | i18n }}</span>
+        <select
+          name="interfaceLanguage"
+          [(ngModel)]="interfaceLanguage"
+          class="rounded-md border border-[var(--ui-border)] bg-[var(--ui-input)] px-3 py-2 text-sm text-[var(--ui-text)] outline-none focus:border-indigo-500"
+        >
+          <option [ngValue]="'LATVIAN'">{{ 'latvianDefault' | i18n }}</option>
+          <option [ngValue]="'ENGLISH'">{{ 'english' | i18n }}</option>
+        </select>
+      </label>
+
+      <div
+        *ngIf="error()"
+        class="rounded-md border border-red-600/40 bg-red-500/10 px-3 py-2 text-sm text-[var(--ui-danger)]"
+      >
+        {{ error() }}
+      </div>
+      <div
+        *ngIf="success()"
+        class="rounded-md border border-emerald-600/40 bg-emerald-500/10 px-3 py-2 text-sm text-[var(--ui-success)]"
+      >
+        {{ success() }}
+      </div>
+
+      <div class="pt-2">
+        <button
+          type="submit"
+          [disabled]="saving()"
+          class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-70"
+        >
+          {{ saving() ? ('saving' | i18n) : ('saveChanges' | i18n) }}
+        </button>
+      </div>
+    </form>
+  </div>
+</section>

@@ -51,7 +51,13 @@ export const boardReducer = createReducer(
     error: null,
   })),
 
-  on(loadBoardsSuccess, (state, { boards }) => ({ ...state, boards, loading: false })),
+  on(loadBoardsSuccess, (state, { boards }) => {
+    const byId = new Map(state.boards.map((b) => [b.id, b]));
+    for (const b of boards) {
+      byId.set(b.id, b);
+    }
+    return { ...state, boards: Array.from(byId.values()), loading: false };
+  }),
   on(loadBoardsFailure, (state, { error }) => ({ ...state, loading: false, error })),
 
   on(loadBoardSuccess, (state, { board }) => ({

@@ -1,21 +1,23 @@
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { UserService } from '../../../Services/user.service';
+import { I18nService } from '../../../Services/i18n.service';
 import { getUser } from '../../../store/user-store/user.actions';
 import { selectUser } from '../../../store/user-store/user.selectors';
+import { I18nPipe } from '../../../core/i18n.pipe';
 
 type AuthMode = 'login' | 'signup';
 
 @Component({
   selector: 'app-auth-component',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, I18nPipe, RouterLink],
   templateUrl: './auth-component.html',
   styleUrl: './auth-component.css',
 })
@@ -25,6 +27,7 @@ export class AuthComponent implements OnInit {
   private readonly store = inject(Store);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
+  readonly i18n = inject(I18nService);
 
   readonly mode = signal<AuthMode>('login');
   readonly submitting = signal(false);
@@ -32,7 +35,7 @@ export class AuthComponent implements OnInit {
 
   readonly isSignup = computed(() => this.mode() === 'signup');
   readonly title = computed(() =>
-    this.isSignup() ? 'Create your TaskM account' : 'Welcome back to TaskM',
+    this.isSignup() ? this.i18n.t('accountTitleSignup') : this.i18n.t('accountTitleLogin'),
   );
 
   username = '';
@@ -79,12 +82,27 @@ export class AuthComponent implements OnInit {
     if (this.submitting()) return;
     this.errorMessage.set(null);
 
-    if (!this.email.trim() || !this.password) {
+    const email = this.email.trim();
+    const password = this.password;
+    const username = this.username.trim();
+    if (!email || !password) {
       this.errorMessage.set('Email and password are required.');
       return;
     }
-    if (this.isSignup() && !this.username.trim()) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      this.errorMessage.set('Please enter a valid email address.');
+      return;
+    }
+    if (password.length < 7) {
+      this.errorMessage.set('Password must be at least 7 characters long.');
+      return;
+    }
+    if (this.isSignup() && !username) {
       this.errorMessage.set('Username is required.');
+      return;
+    }
+    if (this.isSignup() && username.length < 3) {
+      this.errorMessage.set('Username must be at least 3 characters long.');
       return;
     }
 
@@ -92,14 +110,14 @@ export class AuthComponent implements OnInit {
     try {
       if (this.isSignup()) {
         await this.userService.signup({
-          username: this.username.trim(),
-          email: this.email.trim(),
-          password: this.password,
+          username,
+          email,
+          password,
         });
       }
       await this.userService.login({
-        email: this.email.trim(),
-        password: this.password,
+        email,
+        password,
       });
       this.store.dispatch(getUser());
     } catch (err) {

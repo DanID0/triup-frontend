@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserBoard } from '../../../../core/interface';
+import { I18nPipe } from '../../../../core/i18n.pipe';
 
 export type CardStatus = 'all' | 'complete' | 'incomplete';
 
@@ -36,7 +37,7 @@ export const emptyFilter = (): BoardFilter => ({
 @Component({
   selector: 'app-filter-panel',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, I18nPipe],
   templateUrl: './filter-panel.html',
   styleUrls: ['./filter-panel.css'],
 })
@@ -51,18 +52,18 @@ export class FilterPanelComponent {
   readonly showMembers = signal(false);
 
   dueDateOptions: { id: DueDateFilter; label: string; color: string }[] = [
-    { id: 'none', label: 'No dates', color: '#64748b' },
-    { id: 'overdue', label: 'Overdue', color: '#ef4444' },
-    { id: 'nextDay', label: 'Due in the next day', color: '#f59e0b' },
-    { id: 'nextWeek', label: 'Due in the next week', color: '#22c55e' },
-    { id: 'nextMonth', label: 'Due in the next month', color: '#3b82f6' },
+    { id: 'none', label: 'noDates', color: '#64748b' },
+    { id: 'overdue', label: 'overdue', color: '#ef4444' },
+    { id: 'nextDay', label: 'dueNextDay', color: '#f59e0b' },
+    { id: 'nextWeek', label: 'dueNextWeek', color: '#22c55e' },
+    { id: 'nextMonth', label: 'dueNextMonth', color: '#3b82f6' },
   ];
 
   activityOptions: { id: ActivityFilter; label: string }[] = [
-    { id: 'week', label: 'Active in the last week' },
-    { id: 'twoWeeks', label: 'Active in the last two weeks' },
-    { id: 'fourWeeks', label: 'Active in the last four weeks' },
-    { id: 'none', label: 'Without activity in the last four weeks' },
+    { id: 'week', label: 'activeLastWeek' },
+    { id: 'twoWeeks', label: 'activeLastTwoWeeks' },
+    { id: 'fourWeeks', label: 'activeLastFourWeeks' },
+    { id: 'none', label: 'withoutActivityLastFourWeeks' },
   ];
 
   emit() {

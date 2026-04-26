@@ -29,7 +29,7 @@ export class BoardEffects {
   loadBoards$ = createEffect(() =>
     this.actions$.pipe(
       ofType(loadBoards),
-      switchMap(({ workspaceId }) =>
+      mergeMap(({ workspaceId }) =>
         from(this.boardService.getBoardsByWorkspace(workspaceId)).pipe(
           map((boards) => loadBoardsSuccess({ boards })),
           catchError((error) => of(loadBoardsFailure({ error: error.message }))),

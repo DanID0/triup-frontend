@@ -2,3 +2,33 @@
   display: block;
   min-height: 100vh;
 }
+
+:host .workboard-board-table {
+  border: 1px solid var(--ui-border);
+}
+
+:host .workboard-board-thead {
+  background: var(--ui-surface-2);
+  border-bottom: 1px solid var(--ui-border);
+}
+
+:host .workboard-board-thead th {
+  border-right: 1px solid var(--ui-border);
+}
+
+:host .workboard-board-thead th:last-child {
+  border-right: 0;
+}
+
+:host .workboard-board-row td {
+  border-top: 1px solid var(--ui-border);
+  border-right: 1px solid var(--ui-border);
+}
+
+:host .workboard-board-row td:last-child {
+  border-right: 0;
+}
+
+:host article .workboard-board-table {
+  border-top: none;
+}

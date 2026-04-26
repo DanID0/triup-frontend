@@ -9,17 +9,20 @@ import {
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
 
 import { Board as BoardModel, Task, User } from '../../../core/interface';
 import { BoardMembersService } from '../../../Services/board-members.service';
 import { UploadService } from '../../../Services/upload.service';
 import { UserService } from '../../../Services/user.service';
+import { I18nService } from '../../../Services/i18n.service';
+import { ThemeService } from '../../../Services/theme.service';
 import { TaskComponent } from '../components/task/task';
 import { TaskModalComponent } from '../components/task-modal/task-modal';
 import { selectUser } from '../../../store/user-store/user.selectors';
 import { getUserSuccess } from '../../../store/user-store/user.actions';
+import { I18nPipe } from '../../../core/i18n.pipe';
 
 const RECENT_BOARDS_KEY = 'triup:recentBoards';
 const RECENT_BOARDS_LIMIT = 5;
@@ -27,7 +30,7 @@ const RECENT_BOARDS_LIMIT = 5;
 @Component({
   selector: 'app-guest-board',
   standalone: true,
-  imports: [CommonModule, RouterLink, TaskComponent, TaskModalComponent],
+  imports: [CommonModule, RouterLink, TaskComponent, TaskModalComponent, I18nPipe],
   templateUrl: './guest-board.html',
   styleUrls: ['./guest-board.css'],
 })
@@ -39,6 +42,9 @@ export class GuestBoard implements OnInit {
   private readonly uploads = inject(UploadService);
   private readonly userService = inject(UserService);
   private readonly store = inject(Store);
+  readonly i18n = inject(I18nService);
+  readonly theme = inject(ThemeService);
+  readonly user = toSignal<User | null>(this.store.select(selectUser));
 
   readonly board = signal<BoardModel | null>(null);
   readonly error = signal<string | null>(null);
@@ -87,6 +93,7 @@ export class GuestBoard implements OnInit {
         user = null;
       }
     }
+    this.i18n.setFromInterfaceLanguage(user?.interfaceLanguage ?? null);
 
     if (user) {
       await this.joinAndRedirect(token, user);
@@ -151,6 +158,14 @@ export class GuestBoard implements OnInit {
 
   closeTask() {
     this.selectedTask.set(null);
+  }
+
+  toggleTheme(): void {
+    this.theme.toggle();
+  }
+
+  toggleLanguage(): void {
+    this.i18n.setLanguage(this.i18n.lang() === 'lv' ? 'en' : 'lv');
   }
 
   trackColumn = (_: number, c: { id: string }) => c.id;

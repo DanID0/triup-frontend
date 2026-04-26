@@ -28,6 +28,14 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./Pages/board/board/board').then((m) => m.Board),
   },
+  {
+    path: 'settings/manage-profile',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./Pages/settings/manage-profile/manage-profile').then(
+        (m) => m.ManageProfilePage,
+      ),
+  },
 
   {
     path: 'b/:token',

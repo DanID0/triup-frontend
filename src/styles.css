@@ -5,5 +5,73 @@
   --color-primary: #0f2854;
   --color-buttons: #0057CA;
   --color-secondary: #1E3A8A;
+}
 
+/* App UI theme: light = off‑white surfaces + near‑black text; dark ≈ #121212 + light text. Board background images are unchanged (separate from these tokens). */
+html.theme-light {
+  --ui-page: #f2f2f2;
+  --ui-surface: #ffffff;
+  --ui-surface-2: #e8e8e8;
+  --ui-elevated: #fafafa;
+  --ui-text: #0a0a0a;
+  --ui-text-muted: #4a4a4a;
+  --ui-border: #dedede;
+  --ui-header: #f5f5f5;
+  --ui-input: #ffffff;
+  --ui-placeholder: #6b6b6b;
+  --ui-scrim: rgba(15, 15, 15, 0.45);
+  --ui-row-hover: rgba(0, 0, 0, 0.05);
+  --ui-accent: #3730a3;
+  --ui-accent-muted: #4f46e5;
+  --ui-success: #047857;
+  --ui-link: #4338ca;
+  --ui-danger: #b91c1c;
+  color-scheme: light;
+}
+
+html.theme-dark {
+  --ui-page: #121212;
+  --ui-surface: #1a1a1a;
+  --ui-surface-2: #242424;
+  --ui-elevated: #1e1e1e;
+  --ui-text: #fafafa;
+  --ui-text-muted: #a3a3a3;
+  --ui-border: #2a2a2a;
+  --ui-header: #121212;
+  --ui-input: #1a1a1a;
+  --ui-placeholder: #9ca3af;
+  --ui-scrim: rgba(0, 0, 0, 0.65);
+  --ui-row-hover: rgba(255, 255, 255, 0.06);
+  --ui-accent: #a5b4fc;
+  --ui-accent-muted: #818cf8;
+  --ui-success: #6ee7b7;
+  --ui-link: #a5b4fc;
+  --ui-danger: #f87171;
+  color-scheme: dark;
+}
+
+html.theme-light body,
+html.theme-dark body {
+  background-color: var(--ui-page);
+  color: var(--ui-text);
+}
+
+html.theme-light input::placeholder,
+html.theme-light textarea::placeholder,
+html.theme-dark input::placeholder,
+html.theme-dark textarea::placeholder {
+  color: var(--ui-placeholder);
+}
+
+/* Nav / tab active state (avoids invalid `[class.bg-[...]]` in Angular templates) */
+.ui-nav-tab {
+  color: var(--ui-text-muted);
+}
+.ui-nav-tab:hover {
+  background-color: var(--ui-surface-2);
+}
+.ui-nav-tab-active {
+  background-color: var(--ui-surface-2);
+  color: var(--ui-text);
+  font-weight: 600;
 }

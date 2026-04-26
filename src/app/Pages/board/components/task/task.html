@@ -1,5 +1,5 @@
 <div
-  class="group relative rounded-md bg-slate-900/80 text-slate-100 shadow-sm border border-slate-800 hover:border-indigo-500/60 transition cursor-pointer overflow-hidden"
+  class="group relative cursor-pointer overflow-hidden rounded-md border border-[var(--ui-border)] bg-[var(--ui-elevated)] text-[var(--ui-text)] shadow-sm transition hover:border-indigo-500/60"
   [attr.draggable]="!readonly"
   (dragstart)="onDragStart($event)"
   (dragend)="onDragEnd($event)"
@@ -23,16 +23,15 @@
         [style.color]="lc.color"
       >
         <span class="h-1.5 w-1.5 rounded-full" [style.background]="lc.color"></span>
-        {{ lc.text }}
+        {{ lc.text | i18n }}
       </span>
 
       <span
         *ngIf="dueBadge as d"
         class="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold text-white"
         [style.background]="d.color"
-        [title]="d.status"
+        [title]="d.status | i18n"
       >
-        <span aria-hidden="true">📅</span>
         {{ d.label }}
       </span>
 
@@ -40,24 +39,30 @@
         *ngIf="task.completed"
         class="text-[10px] text-emerald-400 inline-flex items-center gap-1"
       >
-        ✓ Done
+        {{ 'done' | i18n }}
       </span>
     </div>
 
-    <div class="flex items-center gap-3 text-[11px] text-slate-400">
-      <span *ngIf="task.comments && task.comments.length" class="inline-flex items-center gap-1">
-        💬 {{ task.comments.length }}
-      </span>
-      <span *ngIf="task.attachments && task.attachments.length" class="inline-flex items-center gap-1">
-        📎 {{ task.attachments.length }}
-      </span>
-      <span *ngIf="task.assignee" class="ml-auto inline-flex items-center gap-1">
+    <div
+      *ngIf="showAssignee"
+      class="flex items-center justify-end text-[11px] text-[var(--ui-text-muted)]"
+    >
+      <span class="inline-flex items-center gap-1.5">
+        <img
+          *ngIf="assigneePhotoUrl as au"
+          [src]="au"
+          alt=""
+          class="h-5 w-5 rounded-full object-cover"
+          [title]="task.assignee?.username"
+        />
         <span
+          *ngIf="!assigneePhotoUrl"
           class="flex h-5 w-5 items-center justify-center rounded-full bg-fuchsia-600 text-white text-[9px] font-semibold"
-          [title]="task.assignee.username"
+          [title]="task.assignee?.username"
         >
-          {{ (task.assignee.username || '?').charAt(0).toUpperCase() }}
+          {{ (task.assignee?.username || '?').charAt(0).toUpperCase() }}
         </span>
+        <span class="truncate max-w-28">{{ task.assignee?.username }}</span>
       </span>
     </div>
   </div>

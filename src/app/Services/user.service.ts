@@ -14,6 +14,15 @@ export interface LoginPayload {
   password: string;
 }
 
+export interface UpdateProfilePayload {
+  username?: string;
+  email?: string;
+  password?: string;
+  oldPassword?: string;
+  interfaceLanguage?: 'LATVIAN' | 'ENGLISH';
+  avatarUrl?: string | null;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -50,6 +59,14 @@ export class UserService {
   async logOut(): Promise<void> {
     await lastValueFrom(
       this.http.post(`${this.baseUrl}/auth/logout`, {}, { withCredentials: true }),
+    );
+  }
+
+  async updateProfile(payload: UpdateProfilePayload): Promise<User> {
+    return await lastValueFrom(
+      this.http.patch<User>(`${this.baseUrl}/user/profile`, payload, {
+        withCredentials: true,
+      }),
     );
   }
 }

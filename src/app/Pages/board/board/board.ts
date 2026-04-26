@@ -18,7 +18,9 @@ import { combineLatest, filter, map, switchMap } from 'rxjs';
 
 import {
   Board as BoardModel,
+  BoardActivity,
   Column,
+  InvitedUserRights,
   Priority,
   Task,
   User,
@@ -28,6 +30,7 @@ import { TaskComponent } from '../components/task/task';
 import { TaskModalComponent } from '../components/task-modal/task-modal';
 import { FilterPanelComponent, BoardFilter, emptyFilter } from '../components/filter-panel/filter-panel';
 import { AssigneesPanelComponent } from '../components/assignees-panel/assignees-panel';
+import { I18nPipe } from '../../../core/i18n.pipe';
 
 import { loadBoard, updateBoard } from '../../../store/board-store/board.actions';
 import { selectBoardById } from '../../../store/board-store/board.selectors';
@@ -51,10 +54,16 @@ import { logOut } from '../../../store/user-store/user.actions';
 
 import { BoardMembersService } from '../../../Services/board-members.service';
 import { UploadService } from '../../../Services/upload.service';
+import { I18nService } from '../../../Services/i18n.service';
+import { ThemeService } from '../../../Services/theme.service';
+import { BoardService } from '../../../Services/board.service';
 
 interface ColumnWithTasks extends Column {
   tasks: Task[];
 }
+
+type TaskSortField = 'updatedAt' | 'dueDate' | 'name' | 'priority' | 'createdAt';
+type SortDirection = 'asc' | 'desc';
 
 const COLUMN_COLORS = [
   '#22c55e',
@@ -65,12 +74,13 @@ const COLUMN_COLORS = [
   '#06b6d4',
 ];
 
-const RECENT_BOARDS_KEY = 'triup:recentBoards';
+const RECENT_BOARDS_KEY_PREFIX = 'triup:recentBoards:';
+const STARRED_BOARDS_KEY_PREFIX = 'triup:starredBoards:';
 const RECENT_BOARDS_LIMIT = 5;
 const PRIORITY_LABELS: Record<Priority, { text: string; color: string }> = {
-  [Priority.High]: { text: 'Urgent', color: '#ef4444' },
-  [Priority.Medium]: { text: 'Important', color: '#eab308' },
-  [Priority.Low]: { text: 'No rush', color: '#22c55e' },
+  [Priority.High]: { text: 'urgent', color: '#ef4444' },
+  [Priority.Medium]: { text: 'medium', color: '#eab308' },
+  [Priority.Low]: { text: 'noRush', color: '#22c55e' },
 };
 
 @Component({
@@ -84,6 +94,7 @@ const PRIORITY_LABELS: Record<Priority, { text: string; color: string }> = {
     TaskModalComponent,
     FilterPanelComponent,
     AssigneesPanelComponent,
+    I18nPipe,
   ],
   templateUrl: './board.html',
   styleUrls: ['./board.css'],
@@ -94,9 +105,13 @@ export class Board implements OnInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly membersService = inject(BoardMembersService);
-  private readonly uploads = inject(UploadService);
+  private readonly boardService = inject(BoardService);
+  readonly uploads = inject(UploadService);
+  private readonly i18n = inject(I18nService);
+  readonly theme = inject(ThemeService);
 
   @ViewChild('boardImageInput') boardImageInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('boardNameInput') boardNameInput?: ElementRef<HTMLInputElement>;
 
   readonly boardId = signal<string | null>(null);
   readonly board = signal<BoardModel | null>(null);
@@ -110,12 +125,23 @@ export class Board implements OnInit {
   readonly assigneesOpen = signal(false);
   readonly filter = signal<BoardFilter>(emptyFilter());
   readonly searchQuery = signal('');
+  readonly taskSortField = signal<TaskSortField>('updatedAt');
+  readonly taskSortDirection = signal<SortDirection>('desc');
   readonly menuOpen = signal(false);
+  readonly accountModalOpen = signal(false);
+  readonly activityOpen = signal(false);
+  readonly activityTab = signal<'all' | 'comments' | 'summary'>('all');
+  readonly activities = signal<BoardActivity[]>([]);
+  readonly activityLoading = signal(false);
+  readonly pendingColumnDelete = signal<ColumnWithTasks | null>(null);
   readonly starred = signal(false);
+  readonly editingBoardName = signal(false);
+  boardNameEdit = '';
 
   readonly selectedTask = signal<Task | null>(null);
 
   newCardNameByColumn: Record<string, string> = {};
+  readonly activeCardInputColumnId = signal<string | null>(null);
   addingListVisible = signal(false);
   newListName = '';
 
@@ -149,6 +175,7 @@ export class Board implements OnInit {
           return;
         }
         if (id === this.boardId()) return;
+        this.editingBoardName.set(false);
         this.boardId.set(id);
         this.store.dispatch(loadBoard({ id }));
         this.store.dispatch(loadColumns({ boardId: id }));
@@ -166,6 +193,7 @@ export class Board implements OnInit {
         if (b) {
           this.board.set(b);
           this.rememberRecentBoard(b);
+          this.applyStarredState(b.id);
         }
       });
 
@@ -202,6 +230,51 @@ export class Board implements OnInit {
           })),
         );
       });
+
+    this.store
+      .select(selectUser)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((user) => {
+        this.i18n.setFromInterfaceLanguage(user?.interfaceLanguage);
+        const id = this.boardId();
+        if (id) this.applyStarredState(id);
+      });
+  }
+
+  private applyStarredState(boardId: string): void {
+    const userId = this.user()?.id;
+    if (!userId) {
+      this.starred.set(false);
+      return;
+    }
+    try {
+      const ids: string[] = JSON.parse(
+        localStorage.getItem(`${STARRED_BOARDS_KEY_PREFIX}${userId}`) || '[]',
+      );
+      this.starred.set(new Set(ids).has(boardId));
+    } catch {
+      this.starred.set(false);
+    }
+  }
+
+  toggleStarred(): void {
+    const id = this.boardId();
+    const u = this.user();
+    if (!id || !u) return;
+    this.starred.update((prev) => {
+      const next = !prev;
+      const key = `${STARRED_BOARDS_KEY_PREFIX}${u.id}`;
+      let ids: string[] = [];
+      try {
+        ids = JSON.parse(localStorage.getItem(key) || '[]');
+      } catch {
+        ids = [];
+      }
+      const without = ids.filter((x) => x !== id);
+      const out = next ? [...without, id] : without;
+      localStorage.setItem(key, JSON.stringify(out));
+      return next;
+    });
   }
 
   /**
@@ -210,14 +283,17 @@ export class Board implements OnInit {
    * the user reached via a shared link.
    */
   private rememberRecentBoard(board: BoardModel): void {
+    const userId = this.user()?.id;
+    if (!userId) return;
+
     try {
-      const raw = localStorage.getItem(RECENT_BOARDS_KEY);
+      const raw = localStorage.getItem(`${RECENT_BOARDS_KEY_PREFIX}${userId}`);
       const list: BoardModel[] = raw ? JSON.parse(raw) : [];
       const next = [board, ...list.filter((b) => b.id !== board.id)].slice(
         0,
         RECENT_BOARDS_LIMIT,
       );
-      localStorage.setItem(RECENT_BOARDS_KEY, JSON.stringify(next));
+      localStorage.setItem(`${RECENT_BOARDS_KEY_PREFIX}${userId}`, JSON.stringify(next));
     } catch {
       // localStorage may be unavailable – silently ignore.
     }
@@ -232,6 +308,95 @@ export class Board implements OnInit {
     } catch {
       this.members.set([]);
     }
+  }
+
+  get filteredActivities(): BoardActivity[] {
+    if (this.activityTab() === 'comments') {
+      return this.activities().filter((a) => a.type === 'COMMENT');
+    }
+    return this.activities();
+  }
+
+  readonly activitySummary = computed(() => {
+    const list = this.activities();
+    const total = list.length;
+    const comments = list.filter((a) => a.type === 'COMMENT').length;
+    const taskChanges = list.filter(
+      (a) =>
+        a.type === 'TASK_CREATED' ||
+        a.type === 'TASK_UPDATED' ||
+        a.type === 'TASK_MOVED' ||
+        a.type === 'TASK_DELETED',
+    ).length;
+    const boardChanges = list.filter(
+      (a) =>
+        a.type === 'BOARD_UPDATED' ||
+        a.type === 'COLUMN_CREATED' ||
+        a.type === 'COLUMN_UPDATED' ||
+        a.type === 'COLUMN_DELETED',
+    ).length;
+    return { total, comments, taskChanges, boardChanges };
+  });
+
+  readonly activityByUser = computed(() => {
+    const grouped = new Map<string, { key: string; username: string; count: number }>();
+    for (const item of this.activities()) {
+      const key = item.user?.id || item.userId || 'unknown';
+      const username = item.user?.username || 'Unknown';
+      const current = grouped.get(key) || { key, username, count: 0 };
+      current.count += 1;
+      grouped.set(key, current);
+    }
+    return Array.from(grouped.values()).sort((a, b) => b.count - a.count);
+  });
+
+  async loadActivity() {
+    const id = this.boardId();
+    if (!id) return;
+    this.activityLoading.set(true);
+    try {
+      const items = await this.boardService.getBoardActivity(id);
+      this.activities.set(items);
+    } catch {
+      this.activities.set([]);
+    } finally {
+      this.activityLoading.set(false);
+    }
+  }
+
+  toggleActivityPanel() {
+    const next = !this.activityOpen();
+    this.activityOpen.set(next);
+    if (next) {
+      this.activityTab.set('all');
+      void this.loadActivity();
+    }
+  }
+
+  setActivityTab(tab: 'all' | 'comments' | 'summary') {
+    this.activityTab.set(tab);
+  }
+
+  setTaskSortField(value: string) {
+    if (
+      value === 'updatedAt' ||
+      value === 'dueDate' ||
+      value === 'name' ||
+      value === 'priority' ||
+      value === 'createdAt'
+    ) {
+      this.taskSortField.set(value);
+    }
+  }
+
+  setTaskSortDirection(value: string) {
+    if (value === 'asc' || value === 'desc') {
+      this.taskSortDirection.set(value);
+    }
+  }
+
+  activityAvatarUrl(a: BoardActivity): string {
+    return this.uploads.absoluteUrl(a.user?.avatarUrl);
   }
 
   get backgroundStyle(): Record<string, string> {
@@ -249,14 +414,57 @@ export class Board implements OnInit {
     };
   }
 
-  get isOwner(): boolean {
+  get canManageMembers(): boolean {
     const uid = this.user()?.id;
-    // Treat workspace owner or admin member as having management rights
-    const b = this.board();
-    if (!b || !uid) return false;
-    if ((b as any).workspace?.userId === uid) return true;
+    if (!uid) return false;
     const me = this.members().find((m) => m.user?.id === uid);
-    return me?.invitedUserRights === 'Admin' || me?.invitedUserRights === 'Member';
+    if (!me) return false;
+    return !!me.isOwner || me.invitedUserRights === InvitedUserRights.Admin;
+  }
+
+  get canManageBoard(): boolean {
+    return this.canManageMembers;
+  }
+
+  get canEditTasks(): boolean {
+    const uid = this.user()?.id;
+    if (!uid) return false;
+    const me = this.members().find((m) => m.user?.id === uid);
+    if (!me) return false;
+    if (me.isOwner) return true;
+    return (
+      me.invitedUserRights === InvitedUserRights.Member ||
+      me.invitedUserRights === InvitedUserRights.Admin
+    );
+  }
+
+  get memberUserIds(): string[] {
+    return this.members().map((m) => m.userId);
+  }
+
+  beginBoardRename(): void {
+    if (!this.canManageBoard) return;
+    this.boardNameEdit = this.board()?.name || '';
+    this.editingBoardName.set(true);
+    setTimeout(() => {
+      this.boardNameInput?.nativeElement?.focus();
+      this.boardNameInput?.nativeElement?.select();
+    });
+  }
+
+  saveBoardName(): void {
+    this.editingBoardName.set(false);
+    const t = this.boardNameEdit.trim();
+    if (!t || t === (this.board()?.name ?? '')) return;
+    const id = this.boardId();
+    if (!id) return;
+    this.store.dispatch(updateBoard({ id, payload: { name: t } }));
+    if (this.activityOpen()) void this.loadActivity();
+  }
+
+  cancelBoardName(): void {
+    this.editingBoardName.set(false);
+    this.boardNameEdit = this.board()?.name || '';
   }
 
   // ---------- Filter ----------
@@ -273,11 +481,25 @@ export class Board implements OnInit {
     const activeWithin = (days: number, date: Date) =>
       (now.getTime() - date.getTime()) / 86400000 <= days;
 
-    return this.columns().map((col) => ({
-      ...col,
-      tasks: col.tasks.filter((t) => {
+    const field = this.taskSortField();
+    const dir = this.taskSortDirection() === 'asc' ? 1 : -1;
+
+    return this.columns().map((col) => {
+      const filtered = col.tasks.filter((t) => {
         const tlabels = this.getTaskLabels(t).map((l) => l.text);
-        if (q && !t.name.toLowerCase().includes(q)) return false;
+        if (q) {
+          const haystack = [
+            t.name,
+            t.description ?? '',
+            t.assignee?.username ?? '',
+            ...(t.labels ?? []),
+            ...(t.attachments ?? []),
+            ...(t.comments ?? []).map((c) => c.content),
+          ]
+            .join(' ')
+            .toLowerCase();
+          if (!haystack.includes(q)) return false;
+        }
         if (kw) {
           const hay =
             `${t.name} ${t.description ?? ''} ${tlabels.join(' ')}`.toLowerCase();
@@ -313,8 +535,30 @@ export class Board implements OnInit {
         }
 
         return true;
-      }),
-    }));
+      });
+
+      const sorted = [...filtered].sort((a, b) => {
+        let cmp = 0;
+        if (field === 'name') {
+          cmp = a.name.localeCompare(b.name);
+        } else if (field === 'priority') {
+          const rank = (p: Priority | undefined) =>
+            p === Priority.High ? 3 : p === Priority.Medium ? 2 : 1;
+          cmp = rank(a.priority) - rank(b.priority);
+        } else {
+          const toTime = (v: string | null | undefined) => (v ? new Date(v).getTime() : -1);
+          if (field === 'dueDate') cmp = toTime(a.dueDate) - toTime(b.dueDate);
+          if (field === 'createdAt') cmp = toTime(a.createdAt) - toTime(b.createdAt);
+          if (field === 'updatedAt') cmp = toTime(a.updatedAt) - toTime(b.updatedAt);
+        }
+        return cmp * dir;
+      });
+
+      return {
+        ...col,
+        tasks: sorted,
+      };
+    });
   }
 
   setFilter(f: BoardFilter) {
@@ -339,6 +583,7 @@ export class Board implements OnInit {
   // ---------- Columns ----------
 
   addColumn() {
+    if (!this.canEditTasks) return;
     const name = this.newListName.trim();
     const id = this.boardId();
     if (!name || !id) return;
@@ -359,22 +604,38 @@ export class Board implements OnInit {
     );
     this.newListName = '';
     this.addingListVisible.set(false);
+    if (this.activityOpen()) void this.loadActivity();
   }
 
-  removeColumn(col: ColumnWithTasks) {
-    if (!confirm(`Delete list "${col.name}"?`)) return;
+  requestRemoveColumn(col: ColumnWithTasks) {
+    if (!this.canEditTasks) return;
+    this.pendingColumnDelete.set(col);
+  }
+
+  removeColumnConfirmed() {
+    const col = this.pendingColumnDelete();
+    if (!col) return;
+    this.pendingColumnDelete.set(null);
     this.store.dispatch(deleteColumn({ id: col.id }));
+    if (this.activityOpen()) void this.loadActivity();
+  }
+
+  cancelRemoveColumn() {
+    this.pendingColumnDelete.set(null);
   }
 
   renameColumn(col: ColumnWithTasks, value: string) {
+    if (!this.canEditTasks) return;
     const name = (value || '').trim();
     if (!name || name === col.name) return;
     this.store.dispatch(updateColumn({ id: col.id, payload: { name } }));
+    if (this.activityOpen()) void this.loadActivity();
   }
 
   // ---------- Tasks ----------
 
   addCard(col: ColumnWithTasks) {
+    if (!this.canEditTasks) return;
     const name = (this.newCardNameByColumn[col.id] || '').trim();
     if (!name) return;
     this.store.dispatch(
@@ -383,6 +644,21 @@ export class Board implements OnInit {
       }),
     );
     this.newCardNameByColumn[col.id] = '';
+    this.activeCardInputColumnId.set(null);
+    if (this.activityOpen()) void this.loadActivity();
+  }
+
+  onCardInputFocus(columnId: string) {
+    this.activeCardInputColumnId.set(columnId);
+  }
+
+  onCardInputBlur(columnId: string) {
+    // Delay so clicking the add button doesn't get swallowed by blur.
+    setTimeout(() => {
+      if (this.activeCardInputColumnId() === columnId) {
+        this.activeCardInputColumnId.set(null);
+      }
+    }, 120);
   }
 
   onDragOver(event: DragEvent) {
@@ -390,12 +666,14 @@ export class Board implements OnInit {
   }
 
   onDrop(event: DragEvent, columnId: string) {
+    if (!this.canEditTasks) return;
     event.preventDefault();
     const taskId = event.dataTransfer?.getData('text/plain');
     if (!taskId) return;
     const task = this.tasks().find((t) => t.id === taskId);
     if (!task || task.columnId === columnId) return;
     this.store.dispatch(moveTask({ id: taskId, columnId }));
+    if (this.activityOpen()) void this.loadActivity();
   }
 
   openTask(t: Task) {
@@ -407,6 +685,7 @@ export class Board implements OnInit {
   }
 
   saveTask(patch: Partial<Task>) {
+    if (!this.canEditTasks) return;
     const t = this.selectedTask();
     if (!t) return;
     // Only send the fields the user actually changed. Backend treats
@@ -418,20 +697,29 @@ export class Board implements OnInit {
       }),
     );
     this.selectedTask.set({ ...t, ...patch } as Task);
+    if (this.activityOpen()) void this.loadActivity();
   }
 
   deleteTaskCard(id: string) {
+    if (!this.canEditTasks) return;
     this.store.dispatch(deleteTask({ id }));
     this.selectedTask.set(null);
+    if (this.activityOpen()) void this.loadActivity();
+  }
+
+  onTaskModalActivityChanged() {
+    if (this.activityOpen()) void this.loadActivity();
   }
 
   // ---------- Board background ----------
 
   onBoardImageClick() {
+    if (!this.canManageBoard) return;
     this.boardImageInput?.nativeElement.click();
   }
 
   async onBoardImageSelected(event: Event) {
+    if (!this.canManageBoard) return;
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
@@ -444,19 +732,36 @@ export class Board implements OnInit {
         payload: { backgroundImageUrl: res.url },
       } as any),
     );
+    if (this.activityOpen()) void this.loadActivity();
     input.value = '';
   }
 
   clearBoardBackground() {
+    if (!this.canManageBoard) return;
     const id = this.boardId();
     if (!id) return;
     this.store.dispatch(
       updateBoard({ id, payload: { backgroundImageUrl: null } }),
     );
+    if (this.activityOpen()) void this.loadActivity();
   }
 
   onLogout() {
+    this.accountModalOpen.set(false);
     this.store.dispatch(logOut());
+  }
+
+  toggleTheme(): void {
+    this.theme.toggle();
+  }
+
+  toggleAccountModal() {
+    this.accountModalOpen.set(!this.accountModalOpen());
+  }
+
+  openManageAccount() {
+    this.accountModalOpen.set(false);
+    this.router.navigateByUrl('/settings/manage-profile');
   }
 
   onBoardChanged(updated: BoardModel) {
@@ -467,10 +772,12 @@ export class Board implements OnInit {
   @HostListener('document:click')
   onDocumentClick() {
     if (this.menuOpen()) this.menuOpen.set(false);
+    if (this.accountModalOpen()) this.accountModalOpen.set(false);
     if (this.filterOpen()) this.filterOpen.set(false);
     if (this.assigneesOpen()) this.assigneesOpen.set(false);
   }
 
   trackColumn = (_: number, c: ColumnWithTasks) => c.id;
   trackTask = (_: number, t: Task) => t.id;
+  trackActivity = (_: number, a: BoardActivity) => a.id;
 }

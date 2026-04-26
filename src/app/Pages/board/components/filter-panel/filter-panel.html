@@ -1,12 +1,12 @@
 <aside
-  class="fixed top-0 right-0 z-40 flex h-full w-80 max-w-[90vw] flex-col border-l border-slate-800 bg-slate-950 text-slate-100 shadow-2xl"
+  class="fixed top-0 right-0 z-40 flex h-full w-80 max-w-[90vw] flex-col border-l border-[var(--ui-border)] bg-[var(--ui-surface)] text-[var(--ui-text)] shadow-2xl"
   (click)="$event.stopPropagation()"
 >
-  <header class="flex items-center justify-between border-b border-slate-800 px-4 py-3">
-    <h3 class="text-sm font-semibold">Filter</h3>
+  <header class="flex items-center justify-between border-b border-[var(--ui-border)] px-4 py-3">
+    <h3 class="text-sm font-semibold">{{ 'filter' | i18n }}</h3>
     <button
       type="button"
-      class="text-slate-400 hover:text-white text-lg leading-none"
+      class="text-lg leading-none text-[var(--ui-text-muted)] hover:text-[var(--ui-text)]"
       (click)="closed.emit()"
       aria-label="Close"
     >
@@ -14,23 +14,23 @@
     </button>
   </header>
 
-  <div class="flex-1 overflow-y-auto px-4 py-4 space-y-6 text-sm">
+  <div class="flex-1 space-y-6 overflow-y-auto px-4 py-4 text-sm">
     <section>
-      <label class="mb-1 block text-xs font-semibold text-slate-300">Keyword</label>
+      <label class="mb-1 block text-xs font-semibold text-[var(--ui-text-muted)]">{{ 'keyword' | i18n }}</label>
       <input
         type="text"
         [(ngModel)]="value.keyword"
         (ngModelChange)="emit()"
-        placeholder="Enter a key word..."
-        class="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-500"
+        [placeholder]="'enterKeyword' | i18n"
+        class="w-full rounded-md border border-[var(--ui-border)] bg-[var(--ui-input)] px-3 py-2 text-sm text-[var(--ui-text)] outline-none focus:border-indigo-500"
       />
-      <p class="mt-1 text-[11px] text-slate-500">
-        Search cards, members, labels, and more.
+      <p class="mt-1 text-[11px] text-[var(--ui-text-muted)]">
+        {{ 'searchCardsMembersLabels' | i18n }}
       </p>
     </section>
 
     <section>
-      <h4 class="mb-2 text-xs font-semibold text-slate-300">Members</h4>
+      <h4 class="mb-2 text-xs font-semibold text-[var(--ui-text-muted)]">{{ 'members' | i18n }}</h4>
       <div class="space-y-2">
         <label class="flex items-center gap-2">
           <input
@@ -40,7 +40,7 @@
             [checked]="value.members === 'any'"
             (change)="setMembers('any')"
           />
-          <span>Any</span>
+          <span>{{ 'any' | i18n }}</span>
         </label>
         <label class="flex items-center gap-2">
           <input
@@ -52,11 +52,11 @@
           />
           <span class="inline-flex items-center gap-2">
             <span
-              class="flex h-5 w-5 items-center justify-center rounded-full bg-slate-700 text-[10px]"
+              class="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--ui-surface-2)] text-[10px] text-[var(--ui-text)]"
             >
               ∅
             </span>
-            No members
+            {{ 'noMembers' | i18n }}
           </span>
         </label>
         <label class="flex items-center gap-2">
@@ -73,16 +73,16 @@
             >
               M
             </span>
-            Cards assigned to me
+            {{ 'cardsAssignedToMe' | i18n }}
           </span>
         </label>
 
         <button
           type="button"
-          class="mt-1 w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-left text-xs text-slate-300 hover:border-indigo-500"
+          class="mt-1 w-full rounded-md border border-[var(--ui-border)] bg-[var(--ui-input)] px-3 py-2 text-left text-xs text-[var(--ui-text)] hover:border-indigo-500"
           (click)="showMembers.set(!showMembers())"
         >
-          {{ showMembers() ? 'Hide members ▲' : 'Select members ▾' }}
+          {{ showMembers() ? ('hideMembers' | i18n) : ('selectMembers' | i18n) }}
         </button>
 
         <div *ngIf="showMembers()" class="space-y-2 pl-1">
@@ -103,15 +103,15 @@
             </span>
             <span class="truncate">{{ m.user?.username }}</span>
           </label>
-          <p *ngIf="!members.length" class="text-[11px] text-slate-500">
-            No members yet.
+          <p *ngIf="!members.length" class="text-[11px] text-[var(--ui-text-muted)]">
+            {{ 'noMembersYet' | i18n }}
           </p>
         </div>
       </div>
     </section>
 
     <section>
-      <h4 class="mb-2 text-xs font-semibold text-slate-300">Card status</h4>
+      <h4 class="mb-2 text-xs font-semibold text-[var(--ui-text-muted)]">{{ 'cardStatus' | i18n }}</h4>
       <div class="space-y-2">
         <label class="flex items-center gap-2">
           <input
@@ -121,7 +121,7 @@
             [checked]="value.cardStatus === 'complete'"
             (change)="value.cardStatus = 'complete'; emit()"
           />
-          <span>Marked as complete</span>
+          <span>{{ 'markedComplete' | i18n }}</span>
         </label>
         <label class="flex items-center gap-2">
           <input
@@ -131,7 +131,7 @@
             [checked]="value.cardStatus === 'incomplete'"
             (change)="value.cardStatus = 'incomplete'; emit()"
           />
-          <span>Marked as not complete</span>
+          <span>{{ 'markedNotComplete' | i18n }}</span>
         </label>
         <label class="flex items-center gap-2">
           <input
@@ -141,13 +141,13 @@
             [checked]="value.cardStatus === 'all'"
             (change)="value.cardStatus = 'all'; emit()"
           />
-          <span class="text-slate-400">Any</span>
+          <span class="text-[var(--ui-text-muted)]">{{ 'any' | i18n }}</span>
         </label>
       </div>
     </section>
 
     <section>
-      <h4 class="mb-2 text-xs font-semibold text-slate-300">Due date</h4>
+      <h4 class="mb-2 text-xs font-semibold text-[var(--ui-text-muted)]">{{ 'dueDate' | i18n }}</h4>
       <div class="space-y-2">
         <label class="flex items-center gap-2">
           <input
@@ -157,7 +157,7 @@
             [checked]="value.dueDate === 'any'"
             (change)="value.dueDate = 'any'; emit()"
           />
-          <span class="text-slate-400">Any</span>
+          <span class="text-[var(--ui-text-muted)]">{{ 'any' | i18n }}</span>
         </label>
         <label
           *ngFor="let opt of dueDateOptions"
@@ -172,14 +172,14 @@
           />
           <span class="inline-flex items-center gap-2">
             <span class="h-2.5 w-2.5 rounded-full" [style.background]="opt.color"></span>
-            {{ opt.label }}
+            {{ opt.label | i18n }}
           </span>
         </label>
       </div>
     </section>
 
     <section>
-      <h4 class="mb-2 text-xs font-semibold text-slate-300">Labels</h4>
+      <h4 class="mb-2 text-xs font-semibold text-[var(--ui-text-muted)]">{{ 'labels' | i18n }}</h4>
       <div class="space-y-2">
         <label class="flex items-center gap-2">
           <input
@@ -189,7 +189,7 @@
             [checked]="value.labels === 'any'"
             (change)="setLabels('any')"
           />
-          <span class="text-slate-400">Any</span>
+          <span class="text-[var(--ui-text-muted)]">{{ 'any' | i18n }}</span>
         </label>
         <label class="flex items-center gap-2">
           <input
@@ -199,7 +199,7 @@
             [checked]="value.labels === 'none'"
             (change)="setLabels('none')"
           />
-          <span>No labels</span>
+          <span>{{ 'noLabels' | i18n }}</span>
         </label>
 
         <div class="space-y-1 pt-1">
@@ -225,7 +225,7 @@
     </section>
 
     <section>
-      <h4 class="mb-2 text-xs font-semibold text-slate-300">Activity</h4>
+      <h4 class="mb-2 text-xs font-semibold text-[var(--ui-text-muted)]">{{ 'activity' | i18n }}</h4>
       <div class="space-y-2">
         <label class="flex items-center gap-2">
           <input
@@ -235,7 +235,7 @@
             [checked]="value.activity === 'any'"
             (change)="value.activity = 'any'; emit()"
           />
-          <span class="text-slate-400">Any</span>
+          <span class="text-[var(--ui-text-muted)]">{{ 'any' | i18n }}</span>
         </label>
         <label
           *ngFor="let opt of activityOptions"
@@ -248,7 +248,7 @@
             [checked]="value.activity === opt.id"
             (change)="value.activity = opt.id; emit()"
           />
-          <span>{{ opt.label }}</span>
+          <span>{{ opt.label | i18n }}</span>
         </label>
       </div>
     </section>

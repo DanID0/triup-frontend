@@ -1,35 +1,40 @@
-<div class="relative flex min-h-screen flex-col text-slate-100" [ngStyle]="backgroundStyle">
-  <div class="absolute inset-0 bg-slate-950/40 pointer-events-none"></div>
+<div class="relative flex min-h-screen flex-col" [ngStyle]="backgroundStyle">
+  <div class="pointer-events-none absolute inset-0 bg-slate-950/40"></div>
 
-  <header class="relative z-20 flex items-center justify-between gap-4 border-b border-white/10 bg-slate-950/60 backdrop-blur px-4 py-2">
-    <a routerLink="/workboard" class="flex items-center gap-2 text-sm font-semibold">
-      <span class="inline-block h-6 w-6 rounded bg-linear-to-br from-orange-400 to-red-500"></span>
+  <header
+    class="relative z-20 flex items-center justify-between gap-4 border-b border-[var(--ui-border)] bg-[var(--ui-header)]/95 px-4 py-2 text-[var(--ui-text)] backdrop-blur transition-colors"
+  >
+    <a routerLink="/workboard" class="flex items-center gap-2 text-sm font-semibold text-[var(--ui-text)]">
+      <img src="/assets/logoooclassic.png" alt="TaskM" class="h-6 w-6 object-contain" />
       <span>TaskM</span>
     </a>
 
     <div *ngIf="user()" class="flex items-center gap-2">
-      <div class="hidden sm:block">
-        <label class="relative block">
-          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">🔍</span>
-          <input
-            type="text"
-            placeholder="Search"
-            class="w-48 rounded-full border border-white/10 bg-slate-900/60 pl-7 pr-3 py-1 text-xs text-white placeholder-slate-400 outline-none focus:border-indigo-500"
-          />
-        </label>
-      </div>
       <button
         type="button"
-        class="inline-flex items-center gap-1 rounded-md bg-indigo-500 px-3 py-1 text-xs font-semibold text-white hover:bg-indigo-400"
+        (click)="toggleTheme()"
+        class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[var(--ui-border)] bg-[var(--ui-surface)] text-base text-[var(--ui-text)] transition hover:bg-[var(--ui-surface-2)]"
+        [attr.aria-label]="theme.isDark() ? ('lightMode' | i18n) : ('darkMode' | i18n)"
+        [title]="theme.isDark() ? ('lightMode' | i18n) : ('darkMode' | i18n)"
       >
-        Create
+        {{ theme.isDark() ? '☀️' : '🌙' }}
       </button>
-      <div
-        class="flex h-7 w-7 items-center justify-center rounded-full bg-linear-to-br from-fuchsia-500 to-pink-500 text-xs font-semibold ring-2 ring-slate-900"
+      <button
+        type="button"
+        class="flex h-7 w-7 items-center justify-center rounded-full bg-linear-to-br from-fuchsia-500 to-pink-500 text-xs font-semibold ring-2 ring-[var(--ui-border)]"
         [title]="user()?.username || 'Account'"
+        (click)="toggleAccountModal(); $event.stopPropagation()"
       >
-        {{ (user()?.username || '?').charAt(0).toUpperCase() }}
-      </div>
+        <img
+          *ngIf="user()?.avatarUrl; else boardAvatarInitial"
+          [src]="uploads.absoluteUrl(user()?.avatarUrl)"
+          alt="Account"
+          class="h-full w-full rounded-full object-cover"
+        />
+        <ng-template #boardAvatarInitial>
+          {{ (user()?.username || '?').charAt(0).toUpperCase() }}
+        </ng-template>
+      </button>
     </div>
 
     <div *ngIf="!user()" class="flex items-center gap-2">
@@ -37,99 +42,172 @@
         routerLink="/login"
         class="rounded-md bg-indigo-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500"
       >
-        Log-in
+        {{ 'logIn' | i18n }}
       </a>
     </div>
   </header>
 
   <div
     *ngIf="user()"
-    class="relative z-20 flex flex-wrap items-center gap-3 border-b border-white/10 bg-slate-950/40 px-4 py-2"
+    class="relative z-20 flex flex-wrap items-center gap-3 border-b border-[var(--ui-border)] bg-[var(--ui-header)]/90 px-4 py-2 text-[var(--ui-text)]"
   >
-    <div class="flex items-center gap-2">
-      <h1 class="text-base font-semibold">{{ board()?.name || 'Board' }}</h1>
+    <div class="flex min-w-0 flex-1 items-center gap-2">
+      <ng-container *ngIf="!editingBoardName()">
+        <h1
+          class="min-w-0 truncate text-base font-semibold"
+          [class.cursor-text]="canManageBoard"
+          [class.decoration-dotted]="canManageBoard"
+          [class.underline]="canManageBoard"
+          (click)="beginBoardRename()"
+        >
+          {{ board()?.name || 'Board' }}
+        </h1>
+      </ng-container>
+      <input
+        *ngIf="editingBoardName()"
+        #boardNameInput
+        type="text"
+        class="min-w-0 max-w-md flex-1 rounded border border-indigo-500/50 bg-[var(--ui-input)] px-2 py-0.5 text-base font-semibold text-[var(--ui-text)] outline-none"
+        [(ngModel)]="boardNameEdit"
+        (blur)="saveBoardName()"
+        (keydown.escape)="cancelBoardName(); $event.stopPropagation()"
+        (keydown.enter)="$any($event.target).blur()"
+      />
       <button
         type="button"
-        class="text-slate-300 hover:text-yellow-300"
-        (click)="starred.set(!starred())"
+        class="shrink-0 text-xs text-[var(--ui-text-muted)] underline decoration-[var(--ui-border)] hover:text-[var(--ui-text)]"
+        (click)="toggleStarred()"
         [attr.aria-label]="starred() ? 'Unstar' : 'Star'"
+        [title]="starred() ? 'Unstar' : 'Star'"
       >
-        {{ starred() ? '★' : '☆' }}
+        <svg
+          class="h-5 w-5"
+          viewBox="0 0 24 24"
+          fill="none"
+          [attr.fill]="starred() ? 'currentColor' : 'none'"
+          stroke="currentColor"
+          stroke-width="1.8"
+          aria-hidden="true"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M11.48 3.5a.56.56 0 0 1 1.04 0l2.12 5.11a.56.56 0 0 0 .48.35l5.51.44a.5.5 0 0 1 .2.99l-4.21 3.6a.56.56 0 0 0-.18.56l1.28 5.39a.56.56 0 0 1-.84.61l-4.72-2.89a.56.56 0 0 0-.59 0l-4.72 2.89a.56.56 0 0 1-.84-.61l1.28-5.39a.56.56 0 0 0-.18-.56l-4.2-3.6a.5.5 0 0 1 .2-.99l5.51-.44a.56.56 0 0 0 .48-.35l2.12-5.11Z"
+          />
+        </svg>
       </button>
     </div>
 
-    <div class="ml-auto flex items-center gap-2 relative" (click)="$event.stopPropagation()">
+    <div class="relative ml-auto flex items-center gap-2" (click)="$event.stopPropagation()">
       <button
         type="button"
-        class="inline-flex items-center gap-1 rounded-full border border-white/20 bg-slate-900/70 px-3 py-1 text-xs hover:border-indigo-500"
+        class="inline-flex items-center gap-1 rounded-full border border-[var(--ui-border)] bg-[var(--ui-surface)] px-3 py-1 text-xs text-[var(--ui-text)] hover:border-indigo-500"
         (click)="filterOpen.set(!filterOpen()); assigneesOpen.set(false); menuOpen.set(false)"
       >
-        <span>▽</span> Filter
+        {{ 'filter' | i18n }}
       </button>
 
       <button
         type="button"
-        class="inline-flex items-center gap-1 rounded-full border border-white/20 bg-slate-900/70 px-3 py-1 text-xs hover:border-indigo-500"
+        class="inline-flex items-center gap-1 rounded-full border border-[var(--ui-border)] bg-[var(--ui-surface)] px-3 py-1 text-xs text-[var(--ui-text)] hover:border-indigo-500"
         (click)="assigneesOpen.set(!assigneesOpen()); filterOpen.set(false); menuOpen.set(false)"
       >
-        <span>👤</span> Assignees
+        {{ 'members' | i18n }}
       </button>
 
       <app-assignees-panel
         *ngIf="assigneesOpen() && board()"
         [board]="board()!"
         [members]="members()"
-        [canManage]="isOwner"
+        [canManage]="canManageMembers"
+        [currentUserId]="user()?.id || null"
         (closed)="assigneesOpen.set(false)"
         (membersChanged)="members.set($event)"
         (boardChanged)="onBoardChanged($event)"
       ></app-assignees-panel>
 
       <label class="relative block">
-        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">🔍</span>
         <input
           type="text"
-          placeholder="Search task"
-          class="w-40 rounded-full border border-white/20 bg-slate-900/70 pl-7 pr-3 py-1 text-xs text-white placeholder-slate-400 outline-none focus:border-indigo-500"
+          [placeholder]="'searchTask' | i18n"
+          class="w-40 rounded-full border border-[var(--ui-border)] bg-[var(--ui-input)] py-1 pl-3 pr-3 text-xs text-[var(--ui-text)] outline-none focus:border-indigo-500"
           [ngModel]="searchQuery()"
           (ngModelChange)="searchQuery.set($event)"
         />
       </label>
 
+      <label class="relative block">
+        <select
+          class="rounded-full border border-[var(--ui-border)] bg-[var(--ui-input)] py-1 pl-3 pr-7 text-xs text-[var(--ui-text)] outline-none focus:border-indigo-500"
+          [ngModel]="taskSortField()"
+          (ngModelChange)="setTaskSortField($event)"
+          [title]="'sortBy' | i18n"
+        >
+          <option value="updatedAt">{{ 'sortUpdatedAt' | i18n }}</option>
+          <option value="dueDate">{{ 'sortDueDate' | i18n }}</option>
+          <option value="name">{{ 'sortName' | i18n }}</option>
+          <option value="priority">{{ 'sortPriority' | i18n }}</option>
+          <option value="createdAt">{{ 'sortCreatedAt' | i18n }}</option>
+        </select>
+      </label>
+
+      <label class="relative block">
+        <select
+          class="rounded-full border border-[var(--ui-border)] bg-[var(--ui-input)] py-1 pl-3 pr-7 text-xs text-[var(--ui-text)] outline-none focus:border-indigo-500"
+          [ngModel]="taskSortDirection()"
+          (ngModelChange)="setTaskSortDirection($event)"
+          [title]="'sortDirection' | i18n"
+        >
+          <option value="asc">{{ 'ascending' | i18n }}</option>
+          <option value="desc">{{ 'descending' | i18n }}</option>
+        </select>
+      </label>
+
       <button
         type="button"
-        class="rounded-md px-2 py-1 text-lg text-slate-200 hover:bg-slate-800/60"
-        (click)="menuOpen.set(!menuOpen()); filterOpen.set(false); assigneesOpen.set(false)"
-        aria-label="Menu"
+        class="rounded-md px-2 py-1 text-xs text-[var(--ui-text)] hover:bg-[var(--ui-surface-2)]"
+        (click)="toggleActivityPanel(); filterOpen.set(false); assigneesOpen.set(false); menuOpen.set(false)"
       >
-        ≡
+        {{ 'activity' | i18n }}
+      </button>
+
+      <button
+        type="button"
+        class="rounded-md px-2 py-1 text-xs text-[var(--ui-text)] hover:bg-[var(--ui-surface-2)]"
+        (click)="menuOpen.set(!menuOpen()); filterOpen.set(false); assigneesOpen.set(false)"
+      >
+        Menu
       </button>
 
       <div
         *ngIf="menuOpen()"
-        class="absolute right-0 top-10 z-30 w-52 rounded-md border border-slate-800 bg-slate-950 text-sm shadow-2xl"
+        class="absolute right-0 top-10 z-30 w-52 rounded-md border border-[var(--ui-border)] bg-[var(--ui-surface)] text-sm text-[var(--ui-text)] shadow-2xl"
       >
         <button
           type="button"
-          class="flex w-full items-center gap-2 px-4 py-2 text-left hover:bg-slate-900"
+          class="flex w-full items-center gap-2 px-4 py-2 text-left hover:bg-[var(--ui-surface-2)]"
+          [disabled]="!canManageBoard"
+          [class.opacity-50]="!canManageBoard"
           (click)="onBoardImageClick(); menuOpen.set(false)"
         >
-          🖼️ Change background
+          Change background
         </button>
         <button
           *ngIf="board()?.backgroundImageUrl"
           type="button"
-          class="flex w-full items-center gap-2 px-4 py-2 text-left hover:bg-slate-900"
+          class="flex w-full items-center gap-2 px-4 py-2 text-left hover:bg-[var(--ui-surface-2)]"
+          [disabled]="!canManageBoard"
+          [class.opacity-50]="!canManageBoard"
           (click)="clearBoardBackground(); menuOpen.set(false)"
         >
-          🧹 Remove background
+          {{ 'removeBackground' | i18n }}
         </button>
         <button
           type="button"
-          class="flex w-full items-center gap-2 px-4 py-2 text-left hover:bg-slate-900"
+          class="flex w-full items-center gap-2 px-4 py-2 text-left hover:bg-[var(--ui-surface-2)]"
           (click)="menuOpen.set(false); onLogout()"
         >
-          🚪 Log out
+          {{ 'logOut' | i18n }}
         </button>
       </div>
 
@@ -143,27 +221,57 @@
     </div>
   </div>
 
-  <main class="relative z-10 flex-1 overflow-x-auto">
-    <div class="flex gap-3 px-4 py-4 items-start min-w-max">
+  <div
+    *ngIf="accountModalOpen()"
+    class="fixed inset-0 z-50 flex items-start justify-end p-4"
+    [style.background]="'var(--ui-scrim)'"
+    (click)="accountModalOpen.set(false)"
+  >
+    <div
+      class="mt-12 w-64 rounded-md border border-[var(--ui-border)] bg-[var(--ui-surface)] p-2 text-[var(--ui-text)] shadow-2xl"
+      (click)="$event.stopPropagation()"
+    >
+      <button
+        type="button"
+        (click)="openManageAccount()"
+        class="flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm hover:bg-[var(--ui-surface-2)]"
+      >
+        {{ 'manageAccount' | i18n }}
+      </button>
+      <button
+        type="button"
+        (click)="onLogout()"
+        class="flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm hover:bg-[var(--ui-surface-2)]"
+      >
+        {{ 'logOut' | i18n }}
+      </button>
+    </div>
+  </div>
+
+  <main class="relative z-10 flex-1 overflow-x-auto text-[var(--ui-text)]">
+    <div class="flex min-w-max items-start gap-3 px-4 py-4">
       <div
         *ngFor="let col of filteredColumns; trackBy: trackColumn"
-        class="w-72 shrink-0 rounded-md bg-slate-900/80 border border-slate-800 shadow-lg"
+        class="w-72 shrink-0 rounded-md border border-[var(--ui-border)] bg-[var(--ui-surface)]/95 shadow-lg backdrop-blur"
         (dragover)="onDragOver($event)"
         (drop)="onDrop($event, col.id)"
       >
-        <div class="flex items-center justify-between gap-2 px-3 py-2 border-b border-slate-800">
+        <div class="flex items-center justify-between gap-2 border-b border-[var(--ui-border)] px-3 py-2">
           <input
-            class="flex-1 bg-transparent text-sm font-semibold text-white outline-none focus:border-b focus:border-indigo-500"
+            class="flex-1 border-none bg-transparent text-sm font-semibold text-[var(--ui-text)] outline-none focus:border-b focus:border-indigo-500"
             [value]="col.name"
+            [readonly]="!canEditTasks"
             (blur)="renameColumn(col, $any($event.target).value)"
           />
           <button
             type="button"
-            class="text-slate-400 hover:text-white text-xs"
-            (click)="removeColumn(col)"
-            title="Delete list"
+            class="text-xs text-[var(--ui-text-muted)] hover:text-[var(--ui-text)]"
+            (click)="requestRemoveColumn(col)"
+            [disabled]="!canEditTasks"
+            [class.opacity-50]="!canEditTasks"
+            [title]="'deleteList' | i18n"
           >
-            ⋯
+            {{ 'deleteList' | i18n }}
           </button>
         </div>
 
@@ -171,11 +279,13 @@
           <app-task
             *ngFor="let t of col.tasks; trackBy: trackTask"
             [task]="t"
+            [memberIds]="memberUserIds"
+            [readonly]="!canEditTasks"
             (open)="openTask($event)"
           ></app-task>
 
-          <div *ngIf="!col.tasks.length" class="text-xs text-slate-500 italic">
-            Drop cards here
+          <div *ngIf="!col.tasks.length" class="text-xs italic text-[var(--ui-text-muted)]">
+            {{ 'dropCardsHere' | i18n }}
           </div>
         </div>
 
@@ -183,12 +293,25 @@
           <label class="block">
             <input
               type="text"
-              placeholder="+ Add a card"
-              class="w-full rounded-md bg-slate-800/60 px-3 py-2 text-xs text-white placeholder-slate-400 outline-none focus:bg-slate-800 focus:ring-1 focus:ring-indigo-500"
+              [placeholder]="'addCardPlaceholder' | i18n"
+              class="w-full rounded-md border border-[var(--ui-border)] bg-[var(--ui-input)] px-3 py-2 text-xs text-[var(--ui-text)] outline-none focus:ring-1 focus:ring-indigo-500"
               [(ngModel)]="newCardNameByColumn[col.id]"
               (keyup.enter)="addCard(col)"
+              (focus)="onCardInputFocus(col.id)"
+              (blur)="onCardInputBlur(col.id)"
+              [disabled]="!canEditTasks"
             />
           </label>
+          <div class="mt-2 flex items-center gap-2" *ngIf="activeCardInputColumnId() === col.id">
+            <button
+              type="button"
+              class="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 disabled:opacity-50"
+              [disabled]="!(newCardNameByColumn[col.id] || '').trim() || !canEditTasks"
+              (click)="addCard(col)"
+            >
+              {{ 'addCard' | i18n }}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -196,40 +319,43 @@
         <div *ngIf="!addingListVisible()">
           <button
             type="button"
-            class="flex w-full items-center gap-2 rounded-md bg-white/10 px-3 py-2 text-sm text-white hover:bg-white/20 backdrop-blur"
+            class="flex w-full items-center gap-2 rounded-md border border-[var(--ui-border)] bg-[var(--ui-surface)]/90 px-3 py-2 text-sm text-[var(--ui-text)] backdrop-blur hover:bg-[var(--ui-surface-2)]"
             (click)="addingListVisible.set(true)"
+            [disabled]="!canEditTasks"
+            [class.opacity-50]="!canEditTasks"
           >
-            + Add another list
+            + {{ 'addList' | i18n }}
           </button>
         </div>
 
         <div
           *ngIf="addingListVisible()"
-          class="rounded-md border border-slate-800 bg-slate-900 p-3 space-y-2"
+          class="space-y-2 rounded-md border border-[var(--ui-border)] bg-[var(--ui-surface)] p-3"
         >
           <input
             type="text"
-            class="w-full rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none focus:border-indigo-500"
-            placeholder="Enter list title..."
+            class="w-full rounded-md border border-[var(--ui-border)] bg-[var(--ui-input)] px-3 py-2 text-sm text-[var(--ui-text)] outline-none focus:border-indigo-500"
+            [placeholder]="'enterListTitle' | i18n"
             [(ngModel)]="newListName"
             (keyup.enter)="addColumn()"
+            [disabled]="!canEditTasks"
             autofocus
           />
           <div class="flex items-center gap-2">
             <button
               type="button"
               class="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500 disabled:opacity-50"
-              [disabled]="!newListName.trim()"
+              [disabled]="!newListName.trim() || !canEditTasks"
               (click)="addColumn()"
             >
-              Add list
+              {{ 'addList' | i18n }}
             </button>
             <button
               type="button"
-              class="rounded-md px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800"
+              class="rounded-md px-3 py-1.5 text-xs text-[var(--ui-text-muted)] hover:bg-[var(--ui-surface-2)]"
               (click)="addingListVisible.set(false); newListName = ''"
             >
-              Cancel
+              {{ 'cancel' | i18n }}
             </button>
           </div>
         </div>
@@ -246,13 +372,166 @@
     (closed)="filterOpen.set(false)"
   ></app-filter-panel>
 
+  <div
+    *ngIf="activityOpen()"
+    class="fixed inset-0 z-40 flex justify-end"
+    [style.background]="'var(--ui-scrim)'"
+    (click)="activityOpen.set(false)"
+  >
+    <aside
+      class="h-full w-full max-w-md border-l border-[var(--ui-border)] bg-[var(--ui-surface)] text-[var(--ui-text)] shadow-2xl"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="flex items-center justify-between border-b border-[var(--ui-border)] px-4 py-3">
+        <h3 class="text-lg font-semibold">{{ 'activity' | i18n }}</h3>
+        <button
+          type="button"
+          class="rounded p-1 text-[var(--ui-text-muted)] hover:bg-[var(--ui-surface-2)] hover:text-[var(--ui-text)]"
+          (click)="activityOpen.set(false)"
+        >
+          x
+        </button>
+      </div>
+
+      <div class="flex gap-4 border-b border-[var(--ui-border)] px-4 pt-2">
+        <button
+          type="button"
+          class="border-b-2 pb-2 text-sm"
+          [ngClass]="activityTab() === 'all' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-[var(--ui-text-muted)]'"
+          (click)="setActivityTab('all')"
+        >
+          All
+        </button>
+        <button
+          type="button"
+          class="border-b-2 pb-2 text-sm"
+          [ngClass]="activityTab() === 'comments' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-[var(--ui-text-muted)]'"
+          (click)="setActivityTab('comments')"
+        >
+          Comments
+        </button>
+        <button
+          type="button"
+          class="border-b-2 pb-2 text-sm"
+          [ngClass]="activityTab() === 'summary' ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-[var(--ui-text-muted)]'"
+          (click)="setActivityTab('summary')"
+        >
+          {{ 'summary' | i18n }}
+        </button>
+      </div>
+
+      <div class="h-[calc(100%-105px)] overflow-y-auto px-4 py-3">
+        <div *ngIf="!activityLoading() && activityTab() === 'summary'" class="space-y-4">
+          <div class="grid grid-cols-2 gap-2">
+            <div class="rounded-md border border-[var(--ui-border)] bg-[var(--ui-elevated)] p-3">
+              <div class="text-xs text-[var(--ui-text-muted)]">{{ 'totalActivities' | i18n }}</div>
+              <div class="mt-1 text-xl font-semibold">{{ activitySummary().total }}</div>
+            </div>
+            <div class="rounded-md border border-[var(--ui-border)] bg-[var(--ui-elevated)] p-3">
+              <div class="text-xs text-[var(--ui-text-muted)]">{{ 'commentActivities' | i18n }}</div>
+              <div class="mt-1 text-xl font-semibold">{{ activitySummary().comments }}</div>
+            </div>
+            <div class="rounded-md border border-[var(--ui-border)] bg-[var(--ui-elevated)] p-3">
+              <div class="text-xs text-[var(--ui-text-muted)]">{{ 'taskActivities' | i18n }}</div>
+              <div class="mt-1 text-xl font-semibold">{{ activitySummary().taskChanges }}</div>
+            </div>
+            <div class="rounded-md border border-[var(--ui-border)] bg-[var(--ui-elevated)] p-3">
+              <div class="text-xs text-[var(--ui-text-muted)]">{{ 'boardActivities' | i18n }}</div>
+              <div class="mt-1 text-xl font-semibold">{{ activitySummary().boardChanges }}</div>
+            </div>
+          </div>
+
+          <div class="rounded-md border border-[var(--ui-border)] bg-[var(--ui-elevated)] p-3">
+            <h4 class="text-sm font-semibold">{{ 'activitiesByUser' | i18n }}</h4>
+            <div *ngIf="!activityByUser().length" class="mt-2 text-xs text-[var(--ui-text-muted)]">
+              {{ 'noActivityYet' | i18n }}
+            </div>
+            <div *ngFor="let row of activityByUser()" class="mt-2 flex items-center justify-between border-b border-[var(--ui-border)] pb-2 text-sm last:border-b-0">
+              <span>{{ row.username }}</span>
+              <span class="font-semibold">{{ row.count }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="activityLoading()" class="py-4 text-sm text-[var(--ui-text-muted)]">
+          Loading...
+        </div>
+        <div *ngIf="!activityLoading() && activityTab() !== 'summary' && !filteredActivities.length" class="py-4 text-sm text-[var(--ui-text-muted)]">
+          {{ 'noActivityYet' | i18n }}
+        </div>
+
+        <div
+          *ngFor="let item of activityTab() === 'summary' ? [] : filteredActivities; trackBy: trackActivity"
+          class="mb-4 border-b border-[var(--ui-border)] pb-3 last:mb-0 last:border-b-0"
+        >
+          <div class="flex items-start gap-3">
+            <div class="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-600 text-xs font-semibold text-white">
+              <img
+                *ngIf="item.user?.avatarUrl; else activityInitial"
+                [src]="activityAvatarUrl(item)"
+                alt="User"
+                class="h-full w-full object-cover"
+              />
+              <ng-template #activityInitial>
+                {{ (item.user?.username || '?').charAt(0).toUpperCase() }}
+              </ng-template>
+            </div>
+            <div class="min-w-0">
+              <p class="text-sm leading-5 text-[var(--ui-text)]">
+                <span class="font-semibold">{{ item.user?.username || 'User' }}</span>
+                {{ item.message }}
+              </p>
+              <p class="mt-1 text-xs text-indigo-300">
+                {{ item.createdAt | date: 'MMM d, y, h:mm a' }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div
+    *ngIf="pendingColumnDelete() as col"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4"
+    [style.background]="'var(--ui-scrim)'"
+    (click)="cancelRemoveColumn()"
+  >
+    <div
+      class="w-full max-w-sm rounded-md border border-[var(--ui-border)] bg-[var(--ui-surface)] p-4 text-[var(--ui-text)] shadow-2xl"
+      (click)="$event.stopPropagation()"
+    >
+      <h3 class="text-base font-semibold">{{ 'deleteList' | i18n }}</h3>
+      <p class="mt-2 text-sm text-[var(--ui-text-muted)]">
+        Are you sure you want to delete "{{ col.name }}"?
+      </p>
+      <div class="mt-4 flex justify-end gap-2">
+        <button
+          type="button"
+          class="rounded-md px-3 py-1.5 text-xs text-[var(--ui-text-muted)] hover:bg-[var(--ui-surface-2)]"
+          (click)="cancelRemoveColumn()"
+        >
+          {{ 'cancel' | i18n }}
+        </button>
+        <button
+          type="button"
+          class="rounded-md bg-[var(--ui-danger)] px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90"
+          (click)="removeColumnConfirmed()"
+        >
+          {{ 'deleteList' | i18n }}
+        </button>
+      </div>
+    </div>
+  </div>
+
   <app-task-modal
     *ngIf="selectedTask() as t"
     [task]="t"
     [members]="members()"
-    [readonlyMode]="!user()"
+    [readonlyMode]="!canEditTasks"
     (closed)="closeTask()"
     (save)="saveTask($event)"
     (delete)="deleteTaskCard($event)"
+    (activityChanged)="onTaskModalActivityChanged()"
   ></app-task-modal>
 </div>

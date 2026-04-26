@@ -21,6 +21,7 @@ import { Subscription } from 'rxjs';
 
 import { Comment, Priority, Task, User, UserBoard } from '../../../../core/interface';
 import { UploadService } from '../../../../Services/upload.service';
+import { I18nService } from '../../../../Services/i18n.service';
 
 import {
   createComment,
@@ -29,11 +30,12 @@ import {
 } from '../../../../store/comment-store/comment.actions';
 import { selectCommentsByTask } from '../../../../store/comment-store/comment.selectors';
 import { selectUser } from '../../../../store/user-store/user.selectors';
+import { I18nPipe } from '../../../../core/i18n.pipe';
 
 @Component({
   selector: 'app-task-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe],
+  imports: [CommonModule, FormsModule, DatePipe, I18nPipe],
   templateUrl: './task-modal.html',
   styleUrls: ['./task-modal.css'],
 })
@@ -41,15 +43,19 @@ export class TaskModalComponent implements OnInit, OnChanges {
   @Input() task!: Task;
   @Input() members: UserBoard[] = [];
   @Input() readonlyMode = false;
+  /** e.g. shared read-only view without API session — skip comment HTTP. */
+  @Input() skipCommentFetch = false;
 
   @Output() closed = new EventEmitter<void>();
   @Output() save = new EventEmitter<Partial<Task>>();
   @Output() delete = new EventEmitter<string>();
+  @Output() activityChanged = new EventEmitter<void>();
 
   @ViewChild('fileInput') fileInput?: ElementRef<HTMLInputElement>;
 
   private readonly store = inject(Store);
   private readonly uploads = inject(UploadService);
+  private readonly i18n = inject(I18nService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly comments = signal<Comment[]>([]);
@@ -59,6 +65,7 @@ export class TaskModalComponent implements OnInit, OnChanges {
   readonly showMembersPicker = signal(false);
   readonly descEditing = signal(false);
   readonly uploading = signal(false);
+  readonly showDeleteConfirm = signal(false);
   readonly currentUser = signal<User | null>(null);
 
   readonly priorities: Priority[] = [Priority.Low, Priority.Medium, Priority.High];
@@ -111,11 +118,12 @@ export class TaskModalComponent implements OnInit, OnChanges {
       this.descEditing.set(false);
 
       // Replace the previous subscription so opening a different task doesn't
-      // leak subscriptions. Skip comment fetching entirely in readonly/guest
-      // mode — the backend endpoint requires authentication.
+      // leak subscriptions. Load comments for all logged-in users, including
+      // board guests (view-only): they can read; only the composer is hidden.
+      // Skip when there is no session (anonymous share page).
       this.commentsSub?.unsubscribe();
       this.comments.set([]);
-      if (!this.readonlyMode) {
+      if (!this.skipCommentFetch) {
         this.store.dispatch(loadComments({ taskId: this.task.id }));
         this.commentsSub = this.store
           .select(selectCommentsByTask(this.task.id))
@@ -136,18 +144,18 @@ export class TaskModalComponent implements OnInit, OnChanges {
     if (Number.isNaN(due.getTime())) return null;
     const now = new Date();
     const diffDays = (due.getTime() - now.getTime()) / 86400000;
-    if (this.editing.completed) return { label: 'Complete', color: '#22c55e' };
-    if (diffDays < 0) return { label: 'Overdue', color: '#ef4444' };
-    if (diffDays <= 1) return { label: 'Due soon', color: '#f59e0b' };
-    if (diffDays <= 7) return { label: 'Due this week', color: '#22c55e' };
-    if (diffDays <= 30) return { label: 'Due this month', color: '#3b82f6' };
+    if (this.editing.completed) return { label: 'done', color: '#22c55e' };
+    if (diffDays < 0) return { label: 'overdue', color: '#ef4444' };
+    if (diffDays <= 1) return { label: 'dueSoon', color: '#f59e0b' };
+    if (diffDays <= 7) return { label: 'dueNextWeek', color: '#22c55e' };
+    if (diffDays <= 30) return { label: 'dueNextMonth', color: '#3b82f6' };
     return null;
   }
 
   get assigneeName(): string {
-    if (!this.editing.assigneeId) return 'Members';
+    if (!this.editing.assigneeId) return 'members';
     const m = this.members.find((x) => x.user?.id === this.editing.assigneeId);
-    return m?.user?.username || 'Members';
+    return m?.user?.username || 'members';
   }
 
   toggleCompleted() {
@@ -223,14 +231,26 @@ export class TaskModalComponent implements OnInit, OnChanges {
     if (!content) return;
     this.store.dispatch(createComment({ payload: { taskId: this.task.id, content } }));
     this.newComment.set('');
+    setTimeout(() => this.activityChanged.emit(), 250);
   }
 
   removeComment(id: string) {
     this.store.dispatch(deleteComment({ id }));
+    setTimeout(() => this.activityChanged.emit(), 250);
   }
 
   onDelete() {
-    if (!confirm('Delete this card?')) return;
+    this.showDeleteConfirm.set(true);
+  }
+
+  confirmDelete() {
+    this.showDeleteConfirm.set(false);
     this.delete.emit(this.task.id);
+  }
+
+  /** Public URL for user avatar, or empty when none. */
+  userAvatarFor(u: User | null | undefined): string {
+    if (!u?.avatarUrl) return '';
+    return this.uploads.absoluteUrl(u.avatarUrl);
   }
 }
