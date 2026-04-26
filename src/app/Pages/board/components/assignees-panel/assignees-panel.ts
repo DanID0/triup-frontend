@@ -58,7 +58,7 @@ export class AssigneesPanelComponent implements OnInit {
   // token route). The recipient lands on the same board UI, but read-only.
   get shareLink(): string {
     if (!this.board?.shareToken) return '';
-    return `${window.location.origin}/b/${this.board.shareToken}`;
+    return `${window.location.origin}/?shareToken=${this.board.shareToken}`;
   }
 
   get isPrivateWorkspaceBoard(): boolean {

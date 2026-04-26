@@ -1,5 +1,5 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -21,6 +21,8 @@ import { ThemeService } from '../../Services/theme.service';
 export class Layoutv1 implements OnInit {
   private readonly store = inject(Store);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   readonly i18n = inject(I18nService);
   readonly theme = inject(ThemeService);
 
@@ -28,6 +30,15 @@ export class Layoutv1 implements OnInit {
   isLoggedIn = false;
 
   ngOnInit(): void {
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        const token = params.get('shareToken');
+        if (token) {
+          this.router.navigate(['/b', token], { replaceUrl: true });
+        }
+      });
+
     this.store.dispatch(getUser());
 
     this.store
