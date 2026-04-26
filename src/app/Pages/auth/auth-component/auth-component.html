@@ -28,6 +28,19 @@
           {{ err }}
         </div>
 
+        <label class="flex flex-col gap-1">
+          <input
+            name="email"
+            type="email"
+            autocomplete="email"
+            required
+            [(ngModel)]="email"
+            [disabled]="submitting()"
+            [placeholder]="'usernameOrEmail' | i18n"
+            class="h-12 rounded-md border border-indigo-300 bg-white px-3 text-base text-slate-900 focus:border-indigo-500 focus:outline-none disabled:opacity-60"
+          />
+        </label>
+
         <label *ngIf="isSignup()" class="flex flex-col gap-1">
           <input
             name="username"
@@ -38,19 +51,6 @@
             [(ngModel)]="username"
             [disabled]="submitting()"
             [placeholder]="'username' | i18n"
-            class="h-12 rounded-md border border-indigo-300 bg-white px-3 text-base text-slate-900 focus:border-indigo-500 focus:outline-none disabled:opacity-60"
-          />
-        </label>
-
-        <label class="flex flex-col gap-1">
-          <input
-            name="email"
-            type="email"
-            autocomplete="email"
-            required
-            [(ngModel)]="email"
-            [disabled]="submitting()"
-            [placeholder]="'usernameOrEmail' | i18n"
             class="h-12 rounded-md border border-indigo-300 bg-white px-3 text-base text-slate-900 focus:border-indigo-500 focus:outline-none disabled:opacity-60"
           />
         </label>
