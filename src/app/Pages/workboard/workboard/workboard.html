@@ -19,18 +19,6 @@
 
       <button
         type="button"
-        (click)="activeTab.set('templates')"
-        class="ui-nav-tab flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition"
-        [class.ui-nav-tab-active]="activeTab() === 'templates'"
-      >
-        <span class="inline-flex h-5 w-5 items-center justify-center rounded-sm border border-[var(--ui-border)]">
-          <span class="h-2 w-3 bg-[var(--ui-text-muted)]"></span>
-        </span>
-        {{ 'templates' | i18n }}
-      </button>
-
-      <button
-        type="button"
         (click)="activeTab.set('settings')"
         class="ui-nav-tab flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition"
         [class.ui-nav-tab-active]="activeTab() === 'settings'"
@@ -103,7 +91,10 @@
         </label>
       </div>
 
-      <div class="order-2 ml-auto flex items-center gap-2 sm:order-3 sm:gap-3">
+      <div
+        class="order-2 ml-auto flex items-center gap-2 sm:order-3 sm:gap-3"
+        (mouseenter)="openAccountModal()"
+      >
         <button
           type="button"
           (click)="toggleTheme()"

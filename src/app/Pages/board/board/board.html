@@ -9,7 +9,7 @@
       <span>TaskM</span>
     </a>
 
-    <div *ngIf="user()" class="flex items-center gap-2">
+    <div *ngIf="user()" class="flex items-center gap-2" (mouseenter)="openAccountModal()">
       <button
         type="button"
         (click)="toggleTheme()"

@@ -31,7 +31,7 @@ import { I18nPipe } from '../../../core/i18n.pipe';
 import { ThemeService } from '../../../Services/theme.service';
 
 type CreateModalMode = null | 'board' | 'workspace';
-type SidebarTab = 'boards' | 'templates' | 'settings';
+type SidebarTab = 'boards' | 'settings';
 
 const RECENT_BOARDS_KEY_PREFIX = 'triup:recentBoards:';
 const STARRED_BOARDS_KEY_PREFIX = 'triup:starredBoards:';
@@ -170,7 +170,9 @@ export class Workboard implements OnInit {
     try {
       const recentRaw = localStorage.getItem(this.recentBoardsKey(userId));
       const recentStored: Board[] = recentRaw ? (JSON.parse(recentRaw) as Board[]) : [];
-      this.recentBoards.set(recentStored.map((r) => byId(r.id) ?? r));
+      const trimmed = recentStored.slice(0, RECENT_BOARDS_LIMIT);
+      this.recentBoards.set(trimmed.map((r) => byId(r.id) ?? r));
+      localStorage.setItem(this.recentBoardsKey(userId), JSON.stringify(trimmed));
     } catch {
       this.recentBoards.set([]);
     }
@@ -287,6 +289,10 @@ export class Workboard implements OnInit {
 
   toggleAccountModal(): void {
     this.accountModalOpen.set(!this.accountModalOpen());
+  }
+
+  openAccountModal(): void {
+    this.accountModalOpen.set(true);
   }
 
   openManageAccount(): void {

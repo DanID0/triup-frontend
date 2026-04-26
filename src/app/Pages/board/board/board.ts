@@ -759,6 +759,10 @@ export class Board implements OnInit {
     this.accountModalOpen.set(!this.accountModalOpen());
   }
 
+  openAccountModal() {
+    this.accountModalOpen.set(true);
+  }
+
   openManageAccount() {
     this.accountModalOpen.set(false);
     this.router.navigateByUrl('/settings/manage-profile');
