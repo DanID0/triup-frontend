@@ -36,7 +36,7 @@
             required
             [(ngModel)]="email"
             [disabled]="submitting()"
-            [placeholder]="'usernameOrEmail' | i18n"
+            [placeholder]="'email' | i18n"
             class="h-12 rounded-md border border-indigo-300 bg-white px-3 text-base text-slate-900 focus:border-indigo-500 focus:outline-none disabled:opacity-60"
           />
         </label>
@@ -45,7 +45,9 @@
           <input
             name="username"
             type="text"
-            autocomplete="username"
+            autocomplete="off"
+            autocapitalize="off"
+            spellcheck="false"
             required
             minlength="3"
             [(ngModel)]="username"
@@ -65,6 +67,20 @@
             [(ngModel)]="password"
             [disabled]="submitting()"
             [placeholder]="'password' | i18n"
+            class="h-12 rounded-md border border-indigo-300 bg-white px-3 text-base text-slate-900 focus:border-indigo-500 focus:outline-none disabled:opacity-60"
+          />
+        </label>
+
+        <label *ngIf="isSignup()" class="flex flex-col gap-1">
+          <input
+            name="confirmPassword"
+            type="password"
+            autocomplete="new-password"
+            required
+            minlength="7"
+            [(ngModel)]="confirmPassword"
+            [disabled]="submitting()"
+            placeholder="Confirm password"
             class="h-12 rounded-md border border-indigo-300 bg-white px-3 text-base text-slate-900 focus:border-indigo-500 focus:outline-none disabled:opacity-60"
           />
         </label>

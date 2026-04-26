@@ -32,6 +32,7 @@ export class ManageProfilePage implements OnInit {
 
   readonly user = signal<User | null>(null);
   readonly avatarMenuOpen = signal(false);
+  readonly passwordModalOpen = signal(false);
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   readonly success = signal<string | null>(null);
@@ -40,6 +41,7 @@ export class ManageProfilePage implements OnInit {
   email = '';
   password = '';
   oldPassword = '';
+  confirmPassword = '';
   interfaceLanguage: Language = Language.LATVIAN;
 
   ngOnInit(): void {
@@ -110,10 +112,6 @@ export class ManageProfilePage implements OnInit {
       this.error.set('Username and email are required.');
       return;
     }
-    if (this.password.trim() && !this.oldPassword.trim()) {
-      this.error.set('Current password is required to set a new password.');
-      return;
-    }
     this.saving.set(true);
     this.error.set(null);
     this.success.set(null);
@@ -122,16 +120,58 @@ export class ManageProfilePage implements OnInit {
         username: this.username.trim(),
         email: this.email.trim(),
         interfaceLanguage: this.interfaceLanguage === Language.ENGLISH ? 'ENGLISH' : 'LATVIAN',
-        password: this.password.trim() || undefined,
-        oldPassword: this.oldPassword.trim() || undefined,
       });
       this.store.dispatch(updateUser({ user: updated }));
       this.i18n.setFromInterfaceLanguage(updated.interfaceLanguage);
-      this.password = '';
-      this.oldPassword = '';
       this.success.set('Profile updated successfully.');
     } catch {
       this.error.set('Could not save profile changes.');
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  openPasswordModal(): void {
+    this.password = '';
+    this.oldPassword = '';
+    this.confirmPassword = '';
+    this.passwordModalOpen.set(true);
+  }
+
+  closePasswordModal(): void {
+    this.passwordModalOpen.set(false);
+  }
+
+  async savePassword(): Promise<void> {
+    const nextPassword = this.password.trim();
+    const currentPassword = this.oldPassword.trim();
+    if (!currentPassword || !nextPassword) {
+      this.error.set('Current password and new password are required.');
+      return;
+    }
+    if (nextPassword.length < 7) {
+      this.error.set('Password must be at least 7 characters long.');
+      return;
+    }
+    if (this.confirmPassword !== this.password) {
+      this.error.set('Passwords do not match.');
+      return;
+    }
+    this.saving.set(true);
+    this.error.set(null);
+    this.success.set(null);
+    try {
+      await this.userService.updateProfile({
+        password: nextPassword,
+        oldPassword: currentPassword,
+      });
+      this.password = '';
+      this.oldPassword = '';
+      this.confirmPassword = '';
+      this.passwordModalOpen.set(false);
+      this.success.set('Password updated successfully.');
+    } catch {
+      this.error.set('Could not update password.');
     } finally {
       this.saving.set(false);
     }

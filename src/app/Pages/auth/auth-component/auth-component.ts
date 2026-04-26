@@ -41,6 +41,7 @@ export class AuthComponent implements OnInit {
   username = '';
   email = '';
   password = '';
+  confirmPassword = '';
 
   ngOnInit(): void {
     const routeMode = this.route.snapshot.data['mode'] as AuthMode | undefined;
@@ -72,6 +73,8 @@ export class AuthComponent implements OnInit {
     if (this.submitting()) return;
     this.mode.set(next);
     this.errorMessage.set(null);
+    this.password = '';
+    this.confirmPassword = '';
     const redirect = this.route.snapshot.queryParamMap.get('redirect');
     this.router.navigate([`/${next}`], {
       queryParams: redirect ? { redirect } : undefined,
@@ -103,6 +106,10 @@ export class AuthComponent implements OnInit {
     }
     if (this.isSignup() && username.length < 3) {
       this.errorMessage.set('Username must be at least 3 characters long.');
+      return;
+    }
+    if (this.isSignup() && this.confirmPassword !== password) {
+      this.errorMessage.set('Passwords do not match.');
       return;
     }
 
