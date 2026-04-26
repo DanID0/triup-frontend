@@ -48,6 +48,10 @@ export class Layoutv1 implements OnInit {
         this.userProfileData = user;
         this.isLoggedIn = !!user;
         this.i18n.setFromInterfaceLanguage(user?.interfaceLanguage);
+        // Logged-in users should land on workboard, not public homepage.
+        if (user && this.router.url === '/') {
+          this.router.navigateByUrl('/workboard');
+        }
       });
   }
 
