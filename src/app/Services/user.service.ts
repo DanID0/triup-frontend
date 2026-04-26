@@ -28,7 +28,7 @@ export interface UpdateProfilePayload {
 })
 export class UserService {
   private readonly http = inject(HttpClient);
-  private readonly baseUrl = 'http://localhost:3000';
+  private readonly baseUrl = 'https://dani.gavrusa.com/api';
 
   async getUser(): Promise<User> {
     return await lastValueFrom(

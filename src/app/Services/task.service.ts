@@ -32,7 +32,7 @@ export type UpdateTaskPayload = Partial<
 })
 export class TaskService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:3000/task';
+  private readonly apiUrl = 'https://dani.gavrusa.com/api/task';
 
   async getTasks(columnId?: string): Promise<Task[]> {
     const url = columnId ? `${this.apiUrl}?columnId=${columnId}` : this.apiUrl;

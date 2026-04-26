@@ -1,10 +1,10 @@
 <div
-  class="flex min-h-screen bg-[var(--ui-page)] text-[var(--ui-text)] transition-colors"
+  class="flex min-h-screen flex-col bg-[var(--ui-page)] text-[var(--ui-text)] transition-colors lg:flex-row"
 >
   <aside
-    class="flex w-60 shrink-0 flex-col gap-6 border-r border-[var(--ui-border)] bg-[var(--ui-elevated)] p-4 transition-colors"
+    class="flex w-full shrink-0 flex-col gap-4 border-b border-[var(--ui-border)] bg-[var(--ui-elevated)] p-3 transition-colors lg:w-60 lg:gap-6 lg:border-b-0 lg:border-r lg:p-4"
   >
-    <nav class="flex flex-col gap-1">
+    <nav class="flex gap-1 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
       <button
         type="button"
         (click)="selectAllBoardsTab()"
@@ -57,10 +57,10 @@
         </button>
       </div>
 
-      <ul class="flex max-h-[40vh] flex-col gap-1 overflow-y-auto pr-1">
+      <ul class="flex max-h-[28vh] gap-1 overflow-x-auto overflow-y-hidden pr-1 lg:max-h-[40vh] lg:flex-col lg:overflow-y-auto lg:overflow-x-hidden">
         <li
           *ngFor="let w of workspaces(); trackBy: trackById"
-          class="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-[var(--ui-text)] hover:bg-[var(--ui-surface-2)]"
+          class="flex min-w-40 cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm text-[var(--ui-text)] hover:bg-[var(--ui-surface-2)] lg:min-w-0"
           [ngClass]="{
             'bg-[var(--ui-surface-2)]': selectedWorkspaceId() === w.id,
             'opacity-60': isWorkspaceHidden(w.id)
@@ -84,14 +84,14 @@
 
   <main class="min-w-0 flex-1">
     <header
-      class="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-[var(--ui-border)] bg-[var(--ui-header)]/95 px-6 py-3 text-[var(--ui-text)] backdrop-blur transition-colors"
+      class="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--ui-border)] bg-[var(--ui-header)]/95 px-3 py-3 text-[var(--ui-text)] backdrop-blur transition-colors sm:px-4 md:px-6"
     >
       <div class="flex items-center gap-2 text-lg font-semibold tracking-wide text-[var(--ui-text)]">
         <img src="/assets/logoooclassic.png" alt="TaskM" class="h-7 w-7 object-contain" />
         <span>TaskM</span>
       </div>
 
-      <div class="max-w-md flex-1">
+      <div class="order-3 w-full flex-none sm:order-2 sm:max-w-md sm:flex-1">
         <label class="relative block">
           <input
             type="text"
@@ -103,7 +103,7 @@
         </label>
       </div>
 
-      <div class="flex items-center gap-3">
+      <div class="order-2 ml-auto flex items-center gap-2 sm:order-3 sm:gap-3">
         <button
           type="button"
           (click)="toggleTheme()"
@@ -139,7 +139,7 @@
       </div>
     </header>
 
-    <div class="p-6 space-y-10 max-w-6xl" *ngIf="activeTab() !== 'settings'; else settingsPage">
+    <div class="max-w-6xl space-y-8 p-3 sm:p-4 md:p-6" *ngIf="activeTab() !== 'settings'; else settingsPage">
       <div
         *ngIf="workspacesError() as err"
         class="rounded-md border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm text-red-700 dark:text-red-300"
@@ -265,7 +265,7 @@
               [id]="'workboard-ws-' + ws.id"
               class="rounded-lg border border-[var(--ui-border)] bg-[var(--ui-surface)] scroll-mt-6"
             >
-              <header class="flex items-center justify-between gap-3 border-b border-[var(--ui-border)] px-4 py-3">
+              <header class="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--ui-border)] px-3 py-3 sm:px-4">
                 <div class="flex items-center gap-3">
                   <span class="flex h-8 w-8 items-center justify-center rounded-md bg-indigo-600 text-sm font-semibold text-white">
                     {{ workspaceInitial(ws.name) }}
@@ -280,18 +280,18 @@
                     </span>
                   </div>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex w-full items-center gap-2 sm:w-auto">
                   <button
                     type="button"
                     (click)="toggleWorkspaceHidden(ws.id)"
-                    class="rounded-md border border-[var(--ui-border)] bg-[var(--ui-elevated)] px-3 py-1 text-xs text-[var(--ui-text)] hover:bg-[var(--ui-surface-2)]"
+                    class="rounded-md border border-[var(--ui-border)] bg-[var(--ui-elevated)] px-2 py-1 text-xs text-[var(--ui-text)] hover:bg-[var(--ui-surface-2)] sm:px-3"
                   >
                     {{ isWorkspaceHidden(ws.id) ? 'Show boards' : 'Hide boards' }}
                   </button>
                   <button
                     type="button"
                     (click)="openCreateBoard(); newBoardWorkspaceId = ws.id"
-                    class="rounded-md border border-[var(--ui-border)] bg-[var(--ui-elevated)] px-3 py-1 text-xs text-[var(--ui-text)] hover:bg-[var(--ui-surface-2)]"
+                    class="rounded-md border border-[var(--ui-border)] bg-[var(--ui-elevated)] px-2 py-1 text-xs text-[var(--ui-text)] hover:bg-[var(--ui-surface-2)] sm:px-3"
                   >
                     + {{ 'boardName' | i18n }}
                   </button>
@@ -351,7 +351,7 @@
     </div>
 
     <ng-template #settingsPage>
-      <div class="max-w-3xl p-6">
+      <div class="max-w-3xl p-3 sm:p-4 md:p-6">
         <section class="rounded-lg border border-[var(--ui-border)] bg-[var(--ui-surface)] p-5 text-[var(--ui-text)]">
           <h2 class="mb-4 text-lg font-semibold">{{ 'workspaceSettings' | i18n }}</h2>
 

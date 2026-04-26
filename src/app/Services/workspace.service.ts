@@ -15,7 +15,7 @@ export type UpdateWorkspacePayload = Partial<CreateWorkspacePayload>;
 })
 export class WorkspaceService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:3000/workspaces';
+  private readonly apiUrl = 'https://dani.gavrusa.com/api/workspaces';
 
   async getWorkspaces(): Promise<Workspace[]> {
     return await lastValueFrom(

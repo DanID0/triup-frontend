@@ -12,10 +12,10 @@
     </div>
   </aside>
 
-  <div class="flex flex-1 items-center justify-center px-6 py-10 lg:px-10">
+  <div class="flex flex-1 items-center justify-center px-4 py-8 sm:px-6 sm:py-10 lg:px-10">
     <div class="w-full max-w-[420px]">
-      <h1 class="text-center text-5xl font-bold text-slate-900">{{ title() }}</h1>
-      <p class="mt-2 text-center text-3xl font-semibold text-slate-500">
+      <h1 class="text-center text-4xl font-bold text-slate-900 sm:text-5xl">{{ title() }}</h1>
+      <p class="mt-2 text-center text-2xl font-semibold text-slate-500 sm:text-3xl">
         {{ isSignup() ? ('authSignupSubtitle' | i18n) : ('authLoginSubtitle' | i18n) }}
       </p>
 
@@ -76,7 +76,7 @@
         <button
           type="submit"
           [disabled]="submitting() || !authForm.form.valid"
-          class="inline-flex h-12 items-center justify-center rounded-md bg-indigo-600 px-4 text-xl font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+          class="inline-flex h-12 items-center justify-center rounded-md bg-indigo-600 px-4 text-lg font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60 sm:text-xl"
         >
           <span *ngIf="!submitting()">{{ isSignup() ? ('createAccount' | i18n) : ('logIn' | i18n) }}</span>
           <span *ngIf="submitting()" class="flex items-center gap-2">
@@ -85,7 +85,7 @@
           </span>
         </button>
 
-        <p class="mt-2 text-center text-lg text-slate-400">
+        <p class="mt-2 text-center text-base text-slate-400 sm:text-lg">
           <ng-container *ngIf="!isSignup()">
             {{ 'noAccount' | i18n }}
             <button type="button" (click)="switchMode('signup')" class="ml-1 font-semibold text-indigo-600 hover:underline">

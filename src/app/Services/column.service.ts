@@ -17,7 +17,7 @@ export type UpdateColumnPayload = Partial<Pick<CreateColumnPayload, 'name' | 'co
 })
 export class ColumnService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:3000/column';
+  private readonly apiUrl = 'https://dani.gavrusa.com/api/column';
 
   async getColumns(boardId?: string): Promise<Column[]> {
     const url = boardId ? `${this.apiUrl}?boardId=${boardId}` : this.apiUrl;

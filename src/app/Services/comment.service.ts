@@ -11,7 +11,7 @@ export interface CreateCommentPayload {
 @Injectable({ providedIn: 'root' })
 export class CommentService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:3000/comment';
+  private readonly apiUrl = 'https://dani.gavrusa.com/api/comment';
 
   getByTask(taskId: string): Promise<Comment[]> {
     return lastValueFrom(

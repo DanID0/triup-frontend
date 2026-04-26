@@ -49,7 +49,7 @@
 
   <div
     *ngIf="user()"
-    class="relative z-20 flex flex-wrap items-center gap-3 border-b border-[var(--ui-border)] bg-[var(--ui-header)]/90 px-4 py-2 text-[var(--ui-text)]"
+    class="relative z-20 flex flex-wrap items-center gap-2 border-b border-[var(--ui-border)] bg-[var(--ui-header)]/90 px-3 py-2 text-[var(--ui-text)] sm:px-4"
   >
     <div class="flex min-w-0 flex-1 items-center gap-2">
       <ng-container *ngIf="!editingBoardName()">
@@ -98,7 +98,7 @@
       </button>
     </div>
 
-    <div class="relative ml-auto flex items-center gap-2" (click)="$event.stopPropagation()">
+    <div class="relative ml-auto flex w-full flex-wrap items-center gap-2 sm:w-auto" (click)="$event.stopPropagation()">
       <button
         type="button"
         class="inline-flex items-center gap-1 rounded-full border border-[var(--ui-border)] bg-[var(--ui-surface)] px-3 py-1 text-xs text-[var(--ui-text)] hover:border-indigo-500"
@@ -126,19 +126,19 @@
         (boardChanged)="onBoardChanged($event)"
       ></app-assignees-panel>
 
-      <label class="relative block">
+      <label class="relative block grow sm:grow-0">
         <input
           type="text"
           [placeholder]="'searchTask' | i18n"
-          class="w-40 rounded-full border border-[var(--ui-border)] bg-[var(--ui-input)] py-1 pl-3 pr-3 text-xs text-[var(--ui-text)] outline-none focus:border-indigo-500"
+          class="w-full rounded-full border border-[var(--ui-border)] bg-[var(--ui-input)] py-1 pl-3 pr-3 text-xs text-[var(--ui-text)] outline-none focus:border-indigo-500 sm:w-40"
           [ngModel]="searchQuery()"
           (ngModelChange)="searchQuery.set($event)"
         />
       </label>
 
-      <label class="relative block">
+      <label class="relative block grow sm:grow-0">
         <select
-          class="rounded-full border border-[var(--ui-border)] bg-[var(--ui-input)] py-1 pl-3 pr-7 text-xs text-[var(--ui-text)] outline-none focus:border-indigo-500"
+          class="w-full rounded-full border border-[var(--ui-border)] bg-[var(--ui-input)] py-1 pl-3 pr-7 text-xs text-[var(--ui-text)] outline-none focus:border-indigo-500 sm:w-auto"
           [ngModel]="taskSortField()"
           (ngModelChange)="setTaskSortField($event)"
           [title]="'sortBy' | i18n"
@@ -151,9 +151,9 @@
         </select>
       </label>
 
-      <label class="relative block">
+      <label class="relative block grow sm:grow-0">
         <select
-          class="rounded-full border border-[var(--ui-border)] bg-[var(--ui-input)] py-1 pl-3 pr-7 text-xs text-[var(--ui-text)] outline-none focus:border-indigo-500"
+          class="w-full rounded-full border border-[var(--ui-border)] bg-[var(--ui-input)] py-1 pl-3 pr-7 text-xs text-[var(--ui-text)] outline-none focus:border-indigo-500 sm:w-auto"
           [ngModel]="taskSortDirection()"
           (ngModelChange)="setTaskSortDirection($event)"
           [title]="'sortDirection' | i18n"
@@ -249,7 +249,7 @@
   </div>
 
   <main class="relative z-10 flex-1 overflow-x-auto text-[var(--ui-text)]">
-    <div class="flex min-w-max items-start gap-3 px-4 py-4">
+    <div class="flex min-w-max items-start gap-3 px-3 py-3 sm:px-4 sm:py-4">
       <div
         *ngFor="let col of filteredColumns; trackBy: trackColumn"
         class="w-72 shrink-0 rounded-md border border-[var(--ui-border)] bg-[var(--ui-surface)]/95 shadow-lg backdrop-blur"

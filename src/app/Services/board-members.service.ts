@@ -6,7 +6,7 @@ import { Board, InvitedUserRights, UserBoard } from '../core/interface';
 @Injectable({ providedIn: 'root' })
 export class BoardMembersService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:3000/boards';
+  private readonly apiUrl = 'https://dani.gavrusa.com/api/boards';
 
   list(boardId: string): Promise<UserBoard[]> {
     return lastValueFrom(

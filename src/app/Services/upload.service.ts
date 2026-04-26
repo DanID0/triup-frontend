@@ -13,7 +13,7 @@ export interface UploadResponse {
 @Injectable({ providedIn: 'root' })
 export class UploadService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:3000';
+  private readonly apiUrl = 'https://dani.gavrusa.com/api';
 
   async uploadImage(file: File): Promise<UploadResponse> {
     const form = new FormData();

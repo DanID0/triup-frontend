@@ -13,7 +13,7 @@ export interface UpdateBoardPayload {
 })
 export class BoardService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:3000/boards';
+  private readonly apiUrl = 'https://dani.gavrusa.com/api/boards';
 
   async getBoardsByWorkspace(workspaceId: string): Promise<Board[]> {
     return await lastValueFrom(
