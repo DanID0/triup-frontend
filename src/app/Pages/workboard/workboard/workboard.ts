@@ -291,10 +291,6 @@ export class Workboard implements OnInit {
     this.accountModalOpen.set(!this.accountModalOpen());
   }
 
-  openAccountModal(): void {
-    this.accountModalOpen.set(true);
-  }
-
   openManageAccount(): void {
     this.accountModalOpen.set(false);
     this.router.navigateByUrl('/settings/manage-profile');
