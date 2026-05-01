@@ -1,7 +1,11 @@
 # TaskM — Triup Frontend
 
-TaskM ir uzdevumu pārvaldības tīmekļa lietotne, kā trello, clickup u.t.t.  Kas paredzēta komandu sadarbībai. Lietotne ļauj izveidot darbvietas un dēļus, pievienot uzdevumus ar prioritātēm un termiņiem, kā arī sekot līdzi projektu progresam.
+TaskM ir uzdevumu parvaldības timmekla lietotne komandu sadarbibai (lidzigi ka Trello vai ClickUp). Lietotne lauj veidot darbvietas un delus, parvaldit uzdevumus ar prioritatem, terminiem un komentariem, pievienot pielikumus, sekot aktivitates vesturei un parvaldit lietotaja profilu.
 
-Projekts izstrādāts ar Angular 21, TypeScript un Tailwind CSS. Backend savienojums notiek caur REST API uz http://localhost:3000.
+Projekts izstradats ar Angular 21, TypeScript un Tailwind CSS. Frontend sazinai ar backend izmanto REST API.
 
-Lietotne atbalsta trīs valodas — latviešu, angļu un krievu.
+Backend dala ir izstradata ar NestJS (TypeScript), izmantojot Prisma ORM un PostgreSQL datubazi. Autentifikacijai tiek izmantots JWT + Passport (local/jwt strat).
+
+Lietotne atbalsta divas valodas - latviesu un anglu.
+
+Produkcijas versija ir pieejama seit: [https://dani.gavrusa.com/](https://dani.gavrusa.com/).
